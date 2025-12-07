@@ -1,9 +1,11 @@
 import React from 'react'
-
+import AdminNavbar from '../../components/admin/AdminNavbar.jsx'
+import { Outlet } from 'react-router-dom'
 function AdminHome() {
   return (
     <div>
-      <h1>Welcome to the Admin Dashboard</h1>
+      <AdminNavbar />
+      <Outlet />
     </div>
   )
 }
