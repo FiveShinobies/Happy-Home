@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Package, Users, ShoppingCart, UserCircle, LayoutDashboard, Menu, X } from 'lucide-react';
+import { Home, Package, Users, ShoppingCart, UserCircle, LayoutDashboard, Menu, X , LogOut  } from 'lucide-react';
 
 const AdminNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,6 +13,7 @@ const AdminNavbar = () => {
     { path: '/admin-home/add-service', label: 'Add Service', icon: Package },
     { path: '/admin-home/all-orders', label: 'Orders', icon: ShoppingCart },
     { path: '/admin-home/admin-panel', label: 'All Users', icon: UserCircle },
+    { path: '/', label: 'logout', icon: LogOut  },
 
     // { path: '/admin-home/all-vendors', label: 'Vendors', icon: Users },
     // { path: '/admin-home/all-consumers', label: 'Consumers', icon: UserCircle },

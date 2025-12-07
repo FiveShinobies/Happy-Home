@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Package, ShoppingCart, User, Info, Phone, Menu, X, ShoppingBag } from 'lucide-react';
+import { Home, Package, ShoppingCart, User, Info, Phone, Menu, X, ShoppingBag , LogOut} from 'lucide-react';
 
 const ConsumerNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,6 +14,7 @@ const ConsumerNavbar = () => {
     { path: '/consumer-home/about-us', label: 'About Us', icon: Info },
     { path: '/consumer-home/contact-us', label: 'Contact', icon: Phone },
     { path: '/consumer-home/consumer-profile', label: 'Profile', icon: User },
+    { path: '/', label: 'logout', icon: LogOut  }
   ];
 
   const isActive = (path) => location.pathname === path;
