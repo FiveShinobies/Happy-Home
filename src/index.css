@@ -1,0 +1,85 @@
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+:root {
+    --primary-blue: #0d6efd;
+    --primary-dark: #0a58ca;
+    --secondary-blue: #6ea8fe;
+    --bg-white: #ffffff;
+    --bg-light: #f8f9fa;
+    --text-dark: #212529;
+    --border-color: #dee2e6;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--bg-light);
+}
+
+.admin-layout {
+    min-height: 100vh;
+    background-color: var(--bg-light);
+}
+
+.service-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border: 1px solid var(--border-color);
+}
+
+.service-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary {
+    background-color: var(--primary-blue);
+    border-color: var(--primary-blue);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.text-primary {
+    color: var(--primary-blue) !important;
+}
+
+.navbar-dark {
+    background-color: var(--text-dark) !important;
+}
+
+.card {
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.badge {
+    font-weight: 500;
+    padding: 0.35rem 0.65rem;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-weight: 600;
+}
+
+.form-label {
+    font-weight: 500;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
