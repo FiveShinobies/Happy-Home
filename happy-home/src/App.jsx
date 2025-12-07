@@ -42,6 +42,7 @@ import AdminPanel from './pages/admin/AdminPanel';
 import ConsumerDetails from './pages/admin/consumer/ConsumerDetails';
 import OrdersPage from './pages/consumer/orders/OrdersPage';
 import AdminCompactDashboard from './pages/admin/AdminCompactDashboard';
+import Home from './pages/mainHome/Home';
 
 
 
@@ -83,10 +84,9 @@ function App() {
 
 
 
+        <Route path='consumer-home' element={<Home />} /> 
         {/* consumer routes */}
         <Route path="/consumer-home" element={<ConsumerHome />}>
-          
-          {/* <Route index element={<MainHome />} />  */}
           <Route path='service-listing' element={<ConsumerServiceListing />} />  
           <Route path='service-details/:id' element={<ServiceDetails />} />
 {/* -------------------------------------------------------------------------------------- */}
