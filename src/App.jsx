@@ -1,5 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 //import Login from './pages/consumer/Login'
+import Home from "./pages/mainHome/Home";
+//import HomePage from './components/Home'
 import AdminHome from './pages/admin/AdminHome'
 import ServiceListing from './pages/admin/ServiceListing'
 import EditService from './pages/admin/service/EditService'
@@ -12,11 +14,11 @@ function App() {
   return (
     <div>
 
-
+      <Home />
       {/* <Routes> */}
       {/* <Route path="/" element={<AdminHome />}> */}
 
-      <ServiceListing />
+      {/* <ServiceListing /> */}
       {/* <AddService/>
       <EditService/>
       <ServiceDetails/> */}
