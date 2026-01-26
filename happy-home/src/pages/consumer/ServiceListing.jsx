@@ -1,296 +1,516 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Star, Clock, DollarSign, Search, Filter } from "lucide-react";
-import { servicesData, categories } from "./servicesData";
+import { Star, Clock, Search, Filter, Package, DollarSign } from "lucide-react";
+import "bootstrap/dist/css/bootstrap.min.css";
+import axios from "axios";
+import service1 from "../../../src/assets/service1.jpg.jpeg";
+import service2 from "../../assets/service2.jpg.jpeg";
+import service3 from "../../assets/service3.jpg.jpeg";
+import service4 from "../../assets/service4.avif";
+import service5 from "../../assets/service5.avif";
+import service6 from "../../assets/service6.avif";
+
+  const imageData =
+    [service1, service2, service3, service4, service5, service6];
 
 const ConsumerServicesListing = () => {
-    const [selectedCategory, setSelectedCategory] = useState("All");
-    const [searchTerm, setSearchTerm] = useState("");
-    const [priceRange, setPriceRange] = useState([0, 200]);
-    const [minRating, setMinRating] = useState(0);
-    const [showFilters, setShowFilters] = useState(false);
-    const [sortBy, setSortBy] = useState("popular");
-    const [currentPage, setCurrentPage] = useState(1);
-    const servicesPerPage = 6;
-    const navigate = useNavigate();
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState("ALL");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [priceRange, setPriceRange] = useState([0, 5000]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState("popular");
+  const [currentPage, setCurrentPage] = useState(1);
+  const servicesPerPage = 6;
+  const navigate = useNavigate();
 
-    // Filter services
-    const filteredServices = servicesData
-        .filter((service) => {
-            const matchesCategory =
-                selectedCategory === "All" || service.category === selectedCategory;
-            const matchesSearch =
-                service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                service.description.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesPrice =
-                service.price >= priceRange[0] && service.price <= priceRange[1];
-            const matchesRating = service.rating >= minRating;
-            return matchesCategory && matchesSearch && matchesPrice && matchesRating;
-        })
-        .sort((a, b) => {
-            if (sortBy === "popular") return b.reviews - a.reviews;
-            if (sortBy === "rating") return b.rating - a.rating;
-            if (sortBy === "priceLow") return a.price - b.price;
-            if (sortBy === "priceHigh") return b.price - a.price;
-            return 0;
-        });
+  // Service categories based on backend enum
+  const categories = [
+    "CLEANING",
+	"REPAIR",
+	"GARDENING",
+	"PLUMBLING",
+	"ELECTRICAL",
+	"BEAUTYANDWELLNESS",
+	"SPA"
+  ];
 
-    // Pagination
-    const indexOfLast = currentPage * servicesPerPage;
-    const indexOfFirst = indexOfLast - servicesPerPage;
-    const currentServices = filteredServices.slice(indexOfFirst, indexOfLast);
-    const totalPages = Math.ceil(filteredServices.length / servicesPerPage);
+  let min = 1;
+  let max = imageData.length - 1;
+  let random = Math.floor(Math.random() * (max - min + 1)) + min;
 
-    const goToPage = (page) => {
-        setCurrentPage(page);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+
+  // Fetch services from backend
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/admin/services'); // Update with actual endpoint
+        console.log('Fetched services:', response.data);
+        setServices(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching services:', error);
+        setLoading(false);
+      }
     };
 
-    useEffect(() => setCurrentPage(1), [selectedCategory, searchTerm, minRating]);
+    fetchServices();
+  }, []);
 
-    const resetFilters = () => {
-        setPriceRange([0, 200]);
-        setMinRating(0);
-        setSearchTerm("");
+  // Filter services
+  const filteredServices = services
+    .filter((service) => {
+      const matchesCategory =
+        selectedCategory === "ALL" || service.category === selectedCategory;
+      const matchesSearch =
+        service.serviceName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        service.shortDesc?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesPrice =
+        service.price >= priceRange[0] && service.price <= priceRange[1];
+      return matchesCategory && matchesSearch && matchesPrice;
+    })
+    .sort((a, b) => {
+      if (sortBy === "popular") return (b.rating || 0) - (a.rating || 0);
+      if (sortBy === "priceLow") return a.price - b.price;
+      if (sortBy === "priceHigh") return b.price - a.price;
+      return 0;
+    });
+
+  // Pagination
+  const indexOfLast = currentPage * servicesPerPage;
+  const indexOfFirst = indexOfLast - servicesPerPage;
+  const currentServices = filteredServices.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filteredServices.length / servicesPerPage);
+
+  const goToPage = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  useEffect(() => setCurrentPage(1), [selectedCategory, searchTerm]);
+
+  const resetFilters = () => {
+    setPriceRange([0, 5000]);
+    setSearchTerm("");
+  };
+
+  const getCategoryIcon = (category) => {
+    const icons = {
+      CLEANING: "🧹",
+      PLUMBLING: "🔧",
+      ELECTRICAL: "💡",
+      REPAIR: "🛠️",
+      SPA: "💆",
+      PAINTING: "🎨",
+      GARDENING: "🌿",
+      PEST_CONTROL: "🐛",
+      ALL: "⭐"
     };
+    return icons[category] || "📦";
+  };
 
+  const formatCategoryName = (category) => {
+    return category.replace(/_/g, ' ').toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  const styles = {
+    pageBackground: {
+      minHeight: '100vh',
+      background: '#ffffff'
+    },
+    heroSection: {
+      background: 'linear-gradient(135deg, #f0f7ff, #ffffff)',
+      borderBottom: '1px solid #e0e0e0',
+      padding: '3rem 0'
+    },
+    searchInput: {
+      borderRadius: '12px',
+      border: '2px solid #e0e0e0',
+      padding: '0.75rem 1rem',
+      fontSize: '1rem',
+      paddingLeft: '2.5rem',
+      transition: 'border-color 0.2s ease'
+    },
+    categoryPill: {
+      padding: '0.5rem 1.25rem',
+      borderRadius: '2rem',
+      border: '2px solid #e0e0e0',
+      background: '#ffffff',
+      color: '#000000',
+      cursor: 'pointer',
+      fontSize: '0.875rem',
+      fontWeight: '500',
+      transition: 'all 0.2s ease',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '0.5rem'
+    },
+    categoryPillActive: {
+      background: '#1e40af',
+      color: '#ffffff',
+      border: '2px solid #1e40af',
+      boxShadow: '0 2px 8px rgba(30, 64, 175, 0.3)'
+    },
+    serviceCard: {
+      borderRadius: '1rem',
+      border: '1px solid #e0e0e0',
+      background: '#ffffff',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      overflow: 'hidden'
+    },
+    serviceImage: {
+      width: '100%',
+      height: '200px',
+      background: '#f0f7ff',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderBottom: '1px solid #e0e0e0'
+    },
+    filterCard: {
+      borderRadius: '1rem',
+      border: '1px solid #e0e0e0',
+      background: '#ffffff'
+    },
+    filterBtn: {
+      padding: '0.5rem 1.25rem',
+      borderRadius: '0.5rem',
+      border: '2px solid #e0e0e0',
+      background: '#ffffff',
+      color: '#000000',
+      cursor: 'pointer',
+      fontSize: '0.875rem',
+      fontWeight: '500',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem',
+      transition: 'all 0.2s ease'
+    },
+    priceTag: {
+      color: '#1e40af',
+      fontWeight: 'bold',
+      fontSize: '1.25rem'
+    },
+    pagination: {
+      borderRadius: '0.5rem',
+      border: '1px solid #e0e0e0'
+    },
+    paginationActive: {
+      background: '#1e40af',
+      color: '#ffffff',
+      border: '1px solid #1e40af'
+    }
+  };
+
+  if (loading) {
     return (
-        <div className="min-vh-100 bg-light">
-            {/* Header */}
-            {/* Hero Section (no <header>) */}
-            <div
-                className="text-center text-dark py-5"
-                style={{
-                    background: "linear-gradient(135deg, #f3f2ff, #ffffff)",
-                    borderBottom: "1px solid #eee",
-                }}
-            >
-                <h1 className="fw-bold mb-2" style={{ fontSize: "2rem" }}>
-                    Find Trusted Home Service Experts
-                </h1>
-                <p className="text-muted mb-4" style={{ fontSize: "1.1rem" }}>
-                    From cleaning to repairs — book your next service in minutes ✨
-                </p>
-
-                {/* Search Bar */}
-                <div className="container position-relative mb-3" style={{ maxWidth: "600px" }}>
-
-                    <input
-                        type="text"
-                        className="form-control search-input py-3 ps-5"
-                        placeholder="Search for cleaning, plumbing, painting..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{
-                            borderRadius: "12px",
-                            fontSize: "1rem",
-                            boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-                        }}
-                    />
-                    <Search
-                        size={22}
-                        className="position-absolute"
-                        style={{ right: "40px", top: "14px", color: "#6c757d" }}
-                    />
-                </div>
-
-                {/* Category Pills */}
-                <div className="category-pills-container d-flex justify-content-center gap-2 flex-wrap mt-3 px-3">
-                    {categories.map((cat) => (
-                        <button
-                            key={cat}
-                            onClick={() => setSelectedCategory(cat)}
-                            className={`category-pill ${selectedCategory === cat ? "active" : ""
-                                } d-flex align-items-center gap-2`}
-                            style={{
-                                border: "1px solid #dee2e6",
-                                boxShadow:
-                                    selectedCategory === cat
-                                        ? "0 2px 6px rgba(0,0,0,0.15)"
-                                        : "0 1px 3px rgba(0,0,0,0.05)",
-                            }}
-                        >
-                            {/* Small visual icons */}
-                            {cat === "Cleaning" && "🧹"}
-                            {cat === "Plumbing" && "🔧"}
-                            {cat === "Electrical" && "💡"}
-                            {cat === "Gardening" && "🌿"}
-                            {cat === "Repair" && "🛠️"}
-                            {cat === "Painting" && "🎨"}
-                            {cat === "All" && "⭐"} {cat}
-                        </button>
-                    ))}
-                </div>
-            </div>
-            <h4 className="fw-semibold mb-4 text-center mt-4">
-                {selectedCategory === "All"
-                    ? "All Available Services"
-                    : `${selectedCategory} Services`}
-            </h4>
-
-
-            {/* Body */}
-            <div className="container py-4">
-                {/* Filters */}
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                    <button
-                        className="btn btn-outline-dark d-flex align-items-center gap-2"
-                        onClick={() => setShowFilters(!showFilters)}
-                    >
-                        <Filter size={18} /> Filters
-                    </button>
-
-                    <select
-                        className="form-select w-auto"
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                    >
-                        <option value="popular">Most Popular</option>
-                        <option value="rating">Highest Rated</option>
-                        <option value="priceLow">Price: Low to High</option>
-                        <option value="priceHigh">Price: High to Low</option>
-                    </select>
-                </div>
-
-                {showFilters && (
-                    <div className="card filter-card mb-4 shadow-sm">
-                        <div className="card-body">
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                                <h6 className="mb-0">Filters</h6>
-                                <button
-                                    className="btn btn-link text-dark p-0 text-decoration-none"
-                                    onClick={resetFilters}
-                                >
-                                    Reset
-                                </button>
-                            </div>
-
-                            <div className="row">
-                                <div className="col-md-6 mb-3">
-                                    <label className="form-label small">
-                                        Price Range: ${priceRange[0]} - ${priceRange[1]}
-                                    </label>
-                                    <input
-                                        type="range"
-                                        className="form-range"
-                                        min="0"
-                                        max="200"
-                                        value={priceRange[1]}
-                                        onChange={(e) =>
-                                            setPriceRange([0, parseInt(e.target.value)])
-                                        }
-                                    />
-                                </div>
-                                <div className="col-md-6 mb-3">
-                                    <label className="form-label small">Minimum Rating</label>
-                                    <select
-                                        className="form-select"
-                                        value={minRating}
-                                        onChange={(e) => setMinRating(parseFloat(e.target.value))}
-                                    >
-                                        <option value="0">Any Rating</option>
-                                        <option value="4">4+ Stars</option>
-                                        <option value="4.5">4.5+ Stars</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Services Grid */}
-                <div className="row g-4">
-                    {currentServices.map((service) => (
-                        <div key={service.id} className="col-md-6 col-lg-4">
-                            <div
-                                className="card service-card shadow-sm"
-                                onClick={() => navigate(`/consumer-home/service-details/${service.id}`)}
-                            >
-                                {service.popular && (
-                                    <div className="position-absolute top-0 end-0 m-2">
-                                        <span className="badge badge-popular">Popular</span>
-                                    </div>
-                                )}
-
-                                <img
-                                    src={service.image}
-                                    alt={service.name}
-                                    className="service-img"
-                                />
-                                <div className="card-body">
-                                    <h5 className="fw-semibold mb-1">{service.name}</h5>
-                                    <p className="text-muted small mb-2">{service.provider}</p>
-
-                                    <div className="d-flex align-items-center gap-2 mb-2">
-                                        <Star size={16} className="star-filled" />
-                                        <span className="small fw-bold">{service.rating}</span>
-                                        <span className="text-muted small">
-                                            ({service.reviews} reviews)
-                                        </span>
-                                    </div>
-
-                                    <div className="d-flex justify-content-between align-items-center">
-                                        <div className="d-flex align-items-center gap-1">
-                                            <DollarSign size={16} />
-                                            <span className="fw-bold">${service.price}</span>
-                                        </div>
-                                        <Clock size={16} className="text-muted" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* No Results */}
-                {filteredServices.length === 0 && (
-                    <div className="text-center py-5 text-muted">
-                        No services found matching your criteria.
-                    </div>
-                )}
-
-                {/* pagination */}
-                {totalPages > 1 && (
-                    <div className="d-flex justify-content-center mt-5">
-                        <nav>
-                            <ul className="pagination">
-                                <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-                                    <button
-                                        className="page-link"
-                                        onClick={() => goToPage(currentPage - 1)}
-                                    >
-                                        ← Prev
-                                    </button>
-                                </li>
-
-                                {[...Array(totalPages)].map((_, i) => (
-                                    <li
-                                        key={i}
-                                        className={`page-item ${currentPage === i + 1 ? "active" : ""}`}
-                                    >
-                                        <button className="page-link" onClick={() => goToPage(i + 1)}>
-                                            {i + 1}
-                                        </button>
-                                    </li>
-                                ))}
-
-                                <li
-                                    className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}
-                                >
-                                    <button
-                                        className="page-link"
-                                        onClick={() => goToPage(currentPage + 1)}
-                                    >
-                                        Next →
-                                    </button>
-                                </li>
-                            </ul>
-                        </nav>
-                    </div>
-                )}
-            </div>
+      <div style={styles.pageBackground}>
+        <div className="container text-center py-5">
+          <div className="spinner-border" style={{ color: '#1e40af' }} role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3 text-muted">Loading services...</p>
         </div>
+      </div>
     );
+  }
+
+  return (
+    <div style={styles.pageBackground}>
+      {/* Hero Section */}
+      <div style={styles.heroSection}>
+        <div className="container">
+          <div className="text-center mb-4">
+            <h1 className="fw-bold mb-2" style={{ fontSize: '2.5rem', color: '#000000' }}>
+              Find Trusted Home Service Experts
+            </h1>
+            <p className="text-muted" style={{ fontSize: '1.1rem' }}>
+              From cleaning to repairs — book your next service in minutes ✨
+            </p>
+          </div>
+
+          {/* Search Bar */}
+          <div className="position-relative mb-4" style={{ maxWidth: '600px', margin: '0 auto' }}>
+            <Search
+              size={20}
+              className="position-absolute"
+              style={{ left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#1e40af' }}
+            />
+            <input
+              type="text"
+              className="form-control"
+              style={styles.searchInput}
+              placeholder="Search for cleaning, plumbing, painting..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onFocus={(e) => e.target.style.borderColor = '#1e40af'}
+              onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+            />
+          </div>
+
+          {/* Category Pills */}
+          <div className="d-flex justify-content-center gap-2 flex-wrap">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                style={{
+                  ...styles.categoryPill,
+                  ...(selectedCategory === cat ? styles.categoryPillActive : {})
+                }}
+                onMouseOver={(e) => {
+                  if (selectedCategory !== cat) {
+                    e.target.style.borderColor = '#1e40af';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (selectedCategory !== cat) {
+                    e.target.style.borderColor = '#e0e0e0';
+                  }
+                }}
+              >
+                <span>{getCategoryIcon(cat)}</span>
+                <span>{formatCategoryName(cat)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="container py-4">
+        {/* Section Title */}
+        <h4 className="fw-bold mb-4 text-center" style={{ color: '#000000' }}>
+          {selectedCategory === "ALL"
+            ? "All Available Services"
+            : `${formatCategoryName(selectedCategory)} Services`}
+        </h4>
+
+        {/* Filters & Sort */}
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <button
+            style={styles.filterBtn}
+            onClick={() => setShowFilters(!showFilters)}
+            onMouseOver={(e) => e.target.style.borderColor = '#1e40af'}
+            onMouseOut={(e) => e.target.style.borderColor = '#e0e0e0'}
+          >
+            <Filter size={18} />
+            Filters
+          </button>
+
+          <select
+            className="form-select"
+            style={{ width: 'auto', borderColor: '#e0e0e0' }}
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="popular">Most Popular</option>
+            <option value="priceLow">Price: Low to High</option>
+            <option value="priceHigh">Price: High to Low</option>
+          </select>
+        </div>
+
+        {/* Filter Panel */}
+        {showFilters && (
+          <div className="card mb-4" style={styles.filterCard}>
+            <div className="card-body p-4">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h6 className="mb-0 fw-bold" style={{ color: '#000000' }}>Filters</h6>
+                <button
+                  className="btn btn-link text-decoration-none"
+                  style={{ color: '#1e40af' }}
+                  onClick={resetFilters}
+                >
+                  Reset All
+                </button>
+              </div>
+
+              <div className="row">
+                <div className="col-md-6">
+                  <label className="form-label small fw-semibold" style={{ color: '#000000' }}>
+                    Price Range: ₹{priceRange[0]} - ₹{priceRange[1]}
+                  </label>
+                  <input
+                    type="range"
+                    className="form-range"
+                    min="0"
+                    max="5000"
+                    value={priceRange[1]}
+                    onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
+                    style={{ accentColor: '#1e40af' }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Services Grid */}
+        <div className="row g-4">
+          {currentServices.map((service) => (
+            <div key={service.serviceID} className="col-md-6 col-lg-4">
+              <div
+                style={styles.serviceCard}
+                onClick={() => navigate(`/consumer-home/service-details/${service.serviceID}`)}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.1)';
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                {/* Image Placeholder */}
+                <div style={styles.serviceImage}>
+                  { imageData.length > 0 || (service.serviceImages && service.serviceImages.length)  > 0 ? (
+                    <img 
+                      src={imageData[Math.floor(Math.random() * (max - min + 1)) + min]} 
+                      alt={service.serviceName}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <Package size={48} style={{ color: '#1e40af', opacity: 0.3 }} />
+                  )}
+                  <div 
+                    className="position-absolute top-0 end-0 m-2"
+                    style={{
+                      background: '#1e40af',
+                      color: '#ffffff',
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '1rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    {getCategoryIcon(service.category)} {formatCategoryName(service.category)}
+                  </div>
+                  {service.rating > 0 && (
+                    <div 
+                      className="position-absolute top-0 start-0 m-2"
+                      style={{
+                        background: '#ffffff',
+                        color: '#000000',
+                        padding: '0.25rem 0.75rem',
+                        borderRadius: '1rem',
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}
+                    >
+                      <Star size={12} fill="#ffc107" style={{ color: '#ffc107' }} />
+                      {service.rating}
+                    </div>
+                  )}
+                </div>
+
+                <div className="card-body p-3">
+                  <h5 className="fw-bold mb-2" style={{ color: '#000000' }}>
+                    {service.serviceName}
+                  </h5>
+                  <p className="text-muted small mb-3" style={{ minHeight: '40px' }}>
+                    {service.shortDesc}
+                  </p>
+
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div>
+                      <div style={styles.priceTag}>₹{service.price.toLocaleString()}</div>
+                      <div className="small text-muted">per service</div>
+                    </div>
+                    <button
+                      className="btn"
+                      style={{
+                        background: '#1e40af',
+                        color: '#ffffff',
+                        borderRadius: '0.5rem',
+                        padding: '0.5rem 1rem',
+                        fontSize: '0.875rem',
+                        fontWeight: '600'
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/consumer-home/checkout/${service.serviceID}`);
+                      }}
+                      onMouseOver={(e) => e.target.style.background = '#1e3a8a'}
+                      onMouseOut={(e) => e.target.style.background = '#1e40af'}
+                    >
+                      Book Now
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* No Results */}
+        {filteredServices.length === 0 && (
+          <div className="text-center py-5">
+            <Package size={64} style={{ color: '#e0e0e0' }} />
+            <h3 className="mt-3" style={{ color: '#000000' }}>No services found</h3>
+            <p className="text-muted">Try adjusting your filters or search terms</p>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="d-flex justify-content-center mt-5">
+            <nav>
+              <ul className="pagination">
+                <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                  <button
+                    className="page-link"
+                    onClick={() => goToPage(currentPage - 1)}
+                    style={{ color: '#1e40af', borderColor: '#e0e0e0' }}
+                  >
+                    ← Prev
+                  </button>
+                </li>
+
+                {[...Array(totalPages)].map((_, i) => (
+                  <li
+                    key={i}
+                    className={`page-item ${currentPage === i + 1 ? "active" : ""}`}
+                  >
+                    <button
+                      className="page-link"
+                      onClick={() => goToPage(i + 1)}
+                      style={
+                        currentPage === i + 1
+                          ? styles.paginationActive
+                          : { color: '#1e40af', borderColor: '#e0e0e0' }
+                      }
+                    >
+                      {i + 1}
+                    </button>
+                  </li>
+                ))}
+
+                <li
+                  className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}
+                >
+                  <button
+                    className="page-link"
+                    onClick={() => goToPage(currentPage + 1)}
+                    style={{ color: '#1e40af', borderColor: '#e0e0e0' }}
+                  >
+                    Next →
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default ConsumerServicesListing;
