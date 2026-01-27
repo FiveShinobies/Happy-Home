@@ -1,6 +1,6 @@
-import serviceHomeCleaning from "../../../assets/service-home-cleaning.jpg";
-import serviceDeepCleaning from "../../../assets/service-deep-cleaning.jpg";
-import serviceMoveOut from "../../../assets/service-move-out.jpg";
+import serviceHomeCleaning from "../../../assets/service1.jpg";
+import serviceDeepCleaning from "../../../assets/service2.jpg";
+import serviceMoveOut from "../../../assets/service3.jpg";
 
 const services = [
   {
