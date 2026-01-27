@@ -16,7 +16,7 @@ const BookingCheckout = () => {
   
   // Get serviceId from URL params or location state
   const { serviceId } = useParams();
-  const consumerId = 1; // Replace with actual logged-in consumer ID
+  const cId = JSON.parse(sessionStorage.getItem('user')).userId;
 
   // Fetch consumer and service data on component mount
   useEffect(() => {
@@ -29,7 +29,7 @@ const BookingCheckout = () => {
         }
 
         const response = await axios.get(
-          `http://localhost:8080/booking/form/${consumerId}/${serviceId}`
+          `http://localhost:8080/booking/form/${cId}/${serviceId}`
         );
         console.log('Fetched booking data:', response.data);
         setConsumerData(response.data);
@@ -48,7 +48,7 @@ const BookingCheckout = () => {
     };
 
     fetchBookingData();
-  }, [serviceId, consumerId, navigate]);
+  }, [serviceId, cId, navigate]);
 
   // Time slots - only start times
   const timeSlots = [

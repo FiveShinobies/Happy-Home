@@ -27,7 +27,7 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
     let finalVendorId = null;
 
     // ⭐ HARDCODED VENDOR ID - Change this to get from localStorage later
-    const HARDCODED_VENDOR_ID = 1;
+    const HARDCODED_VENDOR_ID = JSON.parse(sessionStorage.getItem('user')).userId;
 
     if (propVendorId) {
       console.log('✅ Using vendorId from props:', propVendorId);

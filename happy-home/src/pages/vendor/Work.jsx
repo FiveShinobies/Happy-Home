@@ -96,11 +96,7 @@ const ViewWorkDetails = () => {
 
   const getVendorId = () => {
     const vendorId = 
-      localStorage.getItem('vendorId') || 
-      localStorage.getItem('userId') ||
-      localStorage.getItem('user_id') ||
-      sessionStorage.getItem('vendorId') ||
-      '1';
+    JSON.parse(sessionStorage.getItem('user')).userId;
     return vendorId;
   };
 

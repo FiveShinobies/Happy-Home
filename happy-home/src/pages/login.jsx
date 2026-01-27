@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { Container, Row, Col, Card, Form, Button } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, User, Briefcase, Shield } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-toastify';
+import axios from 'axios';
 
 const Login = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const [userType, setUserType] = useState('consumer');
   const [loading, setLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -50,7 +50,7 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast.error('Please fix all errors before submitting');
       return;
@@ -59,34 +59,66 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Hardcoded users for testing
-      const users = [
-        { username: "admin@email.com", password: "admin123", role: "admin" },
-        { username: "vendor@email.com", password: "vendor123", role: "vendor" },
-        { username: "consumer@email.com", password: "consumer123", role: "consumer" },
-      ];
-
-      const found = users.find(
-        (u) => u.username === formData.email && u.password === formData.password
+      // Call backend login API
+      const response = await axios.post(
+        'http://localhost:8080/login',
+        {
+          email: formData.email,
+          password: formData.password
+        }
       );
 
-      if(!found) {
-        toast.error("Invalid username or password");
-        setLoading(false);
-        return;
+      console.log('Login response:', response);
+      // Check if login was successful
+      if (response.status === 200 && response.data.status === "Success") {
+        // Get role from response headers
+        const role = response.headers['role'];
+        if (role) {
+          // Store user data in localStorage
+          // localStorage.setItem('userType', role.toLowerCase());
+          // localStorage.setItem('user', JSON.stringify({ 
+          //   email: formData.email, 
+          //   role: role.toLowerCase() 
+          // }));
+
+          //used session storage instead local storage
+          sessionStorage.setItem(
+            'user',
+            JSON.stringify({
+              userId: response.data.userId,
+              email: formData.email,
+              role: role.toLowerCase()
+            })
+          );
+
+
+
+          toast.success('Login successful!');
+
+          // Navigate based on role
+          navigate(`/${role.toLowerCase()}-home`);
+        } else {
+          toast.error('Role not found in response');
+        }
+      } else {
+        toast.error('Invalid credentials');
       }
 
-      // Store user data
-      localStorage.setItem('userType', found.role);
-      localStorage.setItem('user', JSON.stringify({ email: found.username, role: found.role }));
-
-      toast.success('Login successful!');
-      
-      // Navigate based on role
-      navigate(`/${found.role}-home`);
-      
     } catch (error) {
-      toast.error('Login failed. Please try again.');
+      if (error.response) {
+        // Server responded with error
+        if (error.response.status === 404) {
+          toast.error('Invalid email or password');
+        } else {
+          toast.error('Login failed. Please try again.');
+        }
+      } else if (error.request) {
+        // Request made but no response
+        toast.error('Unable to connect to server. Please check your connection.');
+      } else {
+        // Something else happened
+        toast.error('An error occurred. Please try again.');
+      }
       console.error('Login error:', error);
     } finally {
       setLoading(false);
@@ -105,8 +137,6 @@ const Login = () => {
 
             <Card className="border-0 shadow-lg">
               <Card.Body className="p-4 p-md-5">
-
-
                 <Form onSubmit={handleSubmit}>
                   {/* Email */}
                   <Form.Group className="mb-3">
@@ -168,13 +198,13 @@ const Login = () => {
 
                   {/* Remember Me & Forgot Password */}
                   <div className="d-flex justify-content-between align-items-center mb-4">
-                    <Form.Check 
+                    <Form.Check
                       type="checkbox"
                       label="Remember me"
                       className="small"
                     />
-                    <Link 
-                      to="/forgot-password" 
+                    <Link
+                      to="/forgot-password"
                       style={{ color: '#0d6efd', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}
                     >
                       Forgot password?
@@ -183,9 +213,9 @@ const Login = () => {
 
                   {/* Submit Button */}
                   <div className="d-grid gap-2">
-                    <Button 
-                      variant="primary" 
-                      size="lg" 
+                    <Button
+                      variant="primary"
+                      size="lg"
                       type="submit"
                       disabled={loading}
                       style={{ height: '48px' }}

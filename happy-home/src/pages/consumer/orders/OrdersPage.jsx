@@ -14,7 +14,8 @@ const OrdersPage = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/consumer/1/allOrders');
+        const cid = JSON.parse(sessionStorage.getItem('user')).userId;
+        const response = await axios.get(`http://localhost:8080/consumer/${cid}/allOrders`);
         console.log('Fetched orders:', response.data);
         setOrders(response.data);
         setLoading(false);

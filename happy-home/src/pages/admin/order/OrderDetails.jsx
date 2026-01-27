@@ -10,14 +10,16 @@ import {
   Briefcase,
   Star
 } from 'lucide-react';
+import { useParams } from "react-router-dom";
 
 export default function OrderDetails() {
+
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Get orderId from URL (for demo, using a fixed ID)
-  const orderId = 1; // You can get this from URL params in your actual app
+  const { orderId } = useParams(); // You can get this from URL params in your actual app
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
