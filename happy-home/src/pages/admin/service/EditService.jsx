@@ -118,9 +118,23 @@ const EditService = () => {
       //     'Content-Type': 'application/json',
       //   }
       // });
-      const response = await axios.put(`http://localhost:8080/admin/service/${id}`, serviceData, {
+
+      const formDataToSend = new FormData();
+
+        formDataToSend.append(
+          "data",
+          new Blob([JSON.stringify({
+            serviceName: formData.name,
+            shortDesc: formData.description,
+            longDesc: formData.fullDescription,
+            price: parseFloat(formData.price),
+            category: formData.category
+          })], { type: "application/json" })
+        );
+
+      const response = await axios.put(`http://localhost:8080/admin/service/${id}`, formDataToSend, {
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'multipart/form-data',
         }
       });
 
