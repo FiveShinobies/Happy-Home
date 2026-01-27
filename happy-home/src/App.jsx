@@ -104,7 +104,7 @@ function App() {
           <Route path='consumer-profile' element={<ConsumerProfile />} />
           <Route path='edit-consumer-profile' element={<EditConsumerProfile />} />
 {/* -------------------------------------------------------------------------------------- */}
-          <Route path='checkout' element={<BookingCheckout />} />
+          <Route path='checkout/:serviceId' element={<BookingCheckout />} />
         </Route>  
 
 

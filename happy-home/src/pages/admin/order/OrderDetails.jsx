@@ -367,7 +367,7 @@ export default function OrderDetails() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Get orderId from URL (for demo, using a fixed ID)
   const orderId = 1; // You can get this from URL params in your actual app
 
@@ -375,11 +375,11 @@ export default function OrderDetails() {
     const fetchOrderDetails = async () => {
       try {
         const response = await fetch(`http://localhost:8080/order/${orderId}`);
-        
+
         if (!response.ok) {
           throw new Error('Order not found');
         }
-        
+
         const data = await response.json();
         setOrder(data);
         setLoading(false);
@@ -428,7 +428,7 @@ export default function OrderDetails() {
   // Calculate price breakdown (since backend only gives orderPrice and servicePrice)
   const calculatePriceBreakdown = () => {
     if (!order) return { serviceCharge: 0, materialCharge: 0, tax: 0, total: 0 };
-    
+
     const total = order.orderPrice;
     const serviceCharge = order.servicePrice;
     const remaining = total - serviceCharge;
@@ -627,7 +627,7 @@ export default function OrderDetails() {
     <div style={styles.pageBackground}>
       <div style={styles.container}>
         {/* BACK BUTTON */}
-        <button 
+        <button
           onClick={() => window.history.back()}
           style={styles.backButton}
           onMouseOver={(e) => {
