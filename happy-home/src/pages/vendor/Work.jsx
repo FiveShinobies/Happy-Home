@@ -1,216 +1,248 @@
-import React, { useState } from 'react';
-import './WorkDetails.css';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
+import "./WorkDetails.css";
 
-const viewWorkDetails = () => {
+const adaptWorkRequests = (data) => {
+  return data.map((item, index) => {
+   
+    const orderId = 
+      item.orderId || 
+      item.id || 
+      item.order_id ||
+      item.myVendor?.orderId ||
+      item.service?.orderId ||
+      null; 
+    console.log(`🔍 Item ${index}:`, {
+      orderId: orderId,
+      hasVendor: !!item.myVendor,
+      service: item.service?.serviceName,
+      price: item.price
+    });
+    
+    return {
+      requestId: `REQ${index + 1}`,
+      orderId: orderId,
+      
+      
+      _rawData: item,
+      
+      serviceName: item.service?.serviceName || "Service",
+      serviceCategory: item.service?.category || "General",
+
+      serviceDate: item.timeSlot?.split("T")[0] || "N/A",
+      serviceTime: item.timeSlot?.split("T")[1]?.substring(0, 5) || "N/A",
+      duration: "2 hours",
+
+      urgency: (item.priority || "medium").toLowerCase(),
+      postedAt: "Just now",
+
+      customer: {
+        name: item.customerName || "Customer",
+        phone: item.customerPhone || "N/A",
+        rating: 4.5,
+        totalBookings: 10,
+      },
+
+      serviceAddress: {
+        area: item.address?.town || item.address?.city || "Unknown",
+        distance: "2.5 km",
+        fullAddress: `${item.address?.town || ""}, ${item.address?.city || ""} - ${item.address?.pincode || ""}`,
+        locationType: "Apartment",
+        floor: "N/A",
+      },
+
+      earnings: {
+        baseAmount: item.price || 0,
+        platformCommission: Math.round((item.price || 0) * 0.1),
+        gst: Math.round((item.price || 0) * 0.18),
+        yourEarnings: item.price || 0,
+        paymentStatus: item.paymentMode === "COD" ? "Cash on Delivery" : "Prepaid",
+        bonus: 0,
+      },
+
+      taskDetails: ["Service will be provided as per booking"],
+
+      requirements: {
+        materialsProvided: false,
+        specialInstructions: item.instructions || null,
+        petFriendly: false,
+        parkingAvailable: true,
+      },
+
+      matchScore: 90,
+    };
+  });
+};
+
+const ViewWorkDetails = () => {
+  const [workRequests, setWorkRequests] = useState([]);
+  const [rawWorkData, setRawWorkData] = useState([]); // Store raw data
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showAcceptModal, setShowAcceptModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
-  const [rejectReason, setRejectReason] = useState('');
-  const [filter, setFilter] = useState('all');
+  const [rejectReason, setRejectReason] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [accepting, setAccepting] = useState(false);
 
-  // Sample work requests data
-  const workRequests = [
-    {
-      requestId: 'REQ001',
-      serviceName: 'Deep House Cleaning',
-      serviceCategory: 'Home Cleaning',
-      serviceDate: '2024-12-12',
-      serviceTime: '10:00 AM - 12:00 PM',
-      duration: '2 hours',
-      urgency: 'high',
-      postedAt: '5 mins ago',
-      
-      customer: {
-        name: 'Priya Sharma',
-        phone: '+91 98765 43210',
-        rating: 4.8,
-        totalBookings: 23,
-        profileImage: 'https://via.placeholder.com/60'
-      },
-      
-      serviceAddress: {
-        area: 'Koramangala',
-        distance: '2.5 km',
-        fullAddress: 'Flat 301, Tower B, Green Valley Apartments, Koramangala 5th Block, Bangalore - 560095',
-        locationType: 'Apartment',
-        floor: '3rd Floor'
-      },
-      
-      earnings: {
-        baseAmount: 1299,
-        platformCommission: 130,
-        gst: 234,
-        yourEarnings: 1169,
-        paymentStatus: 'Prepaid',
-        bonus: 50
-      },
-      
-      taskDetails: [
-        'Vacuum and mop all floors',
-        'Kitchen deep cleaning',
-        'Bathroom sanitization (2 bathrooms)',
-        'Dusting all surfaces',
-        'Balcony cleaning'
-      ],
-      
-      requirements: {
-        materialsProvided: false,
-        specialInstructions: 'Please bring eco-friendly cleaning supplies',
-        petFriendly: true,
-        parkingAvailable: true
-      },
-      
-      matchScore: 95
-    },
-    {
-      requestId: 'REQ002',
-      serviceName: 'AC Repair & Service',
-      serviceCategory: 'Appliance Repair',
-      serviceDate: '2024-12-11',
-      serviceTime: '2:00 PM - 4:00 PM',
-      duration: '1.5 hours',
-      urgency: 'medium',
-      postedAt: '15 mins ago',
-      
-      customer: {
-        name: 'Amit Patel',
-        phone: '+91 98765 43211',
-        rating: 4.5,
-        totalBookings: 12,
-        profileImage: 'https://via.placeholder.com/60'
-      },
-      
-      serviceAddress: {
-        area: 'Indiranagar',
-        distance: '4.2 km',
-        fullAddress: 'House 45, 2nd Cross, Indiranagar 1st Stage, Bangalore - 560038',
-        locationType: 'Independent House',
-        floor: 'Ground Floor'
-      },
-      
-      earnings: {
-        baseAmount: 899,
-        platformCommission: 90,
-        gst: 162,
-        yourEarnings: 809,
-        paymentStatus: 'Cash on Delivery',
-        bonus: 0
-      },
-      
-      taskDetails: [
-        'AC gas refilling',
-        'Filter cleaning',
-        'General servicing',
-        'Check cooling efficiency'
-      ],
-      
-      requirements: {
-        materialsProvided: true,
-        specialInstructions: 'AC is in bedroom on first floor',
-        petFriendly: false,
-        parkingAvailable: true
-      },
-      
-      matchScore: 88
-    },
-    {
-      requestId: 'REQ003',
-      serviceName: 'Plumbing Repair',
-      serviceCategory: 'Plumbing',
-      serviceDate: '2024-12-10',
-      serviceTime: '9:00 AM - 11:00 AM',
-      duration: '1 hour',
-      urgency: 'urgent',
-      postedAt: '2 mins ago',
-      
-      customer: {
-        name: 'Sneha Reddy',
-        phone: '+91 98765 43212',
-        rating: 4.9,
-        totalBookings: 45,
-        profileImage: 'https://via.placeholder.com/60'
-      },
-      
-      serviceAddress: {
-        area: 'Whitefield',
-        distance: '6.8 km',
-        fullAddress: 'Flat 502, Phoenix Heights, Whitefield Main Road, Bangalore - 560066',
-        locationType: 'Apartment',
-        floor: '5th Floor'
-      },
-      
-      earnings: {
-        baseAmount: 599,
-        platformCommission: 60,
-        gst: 108,
-        yourEarnings: 539,
-        paymentStatus: 'Prepaid',
-        bonus: 100
-      },
-      
-      taskDetails: [
-        'Fix leaking kitchen tap',
-        'Check water pressure',
-        'Inspect pipes for damage'
-      ],
-      
-      requirements: {
-        materialsProvided: false,
-        specialInstructions: 'Urgent - water leakage issue',
-        petFriendly: false,
-        parkingAvailable: false
-      },
-      
-      matchScore: 92
-    }
-  ];
+  const getVendorId = () => {
+    const vendorId = 
+      localStorage.getItem('vendorId') || 
+      localStorage.getItem('userId') ||
+      localStorage.getItem('user_id') ||
+      sessionStorage.getItem('vendorId') ||
+      '1';
+    return vendorId;
+  };
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:8080/vendor/work")
+      .then((res) => {
+        console.log("✅ Raw API Response:", res.data);
+        setRawWorkData(res.data); // Store raw data
+        setWorkRequests(adaptWorkRequests(res.data));
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("❌ API ERROR:", err);
+        toast.error("Failed to load work requests");
+        setLoading(false);
+      });
+  }, []);
 
   const getUrgencyClass = (urgency) => {
     const urgencyMap = {
-      'urgent': 'urgency-urgent',
-      'high': 'urgency-high',
-      'medium': 'urgency-medium',
-      'low': 'urgency-low'
+      urgent: "urgency-urgent",
+      high: "urgency-high",
+      medium: "urgency-medium",
+      low: "urgency-low",
     };
-    return urgencyMap[urgency] || 'urgency-medium';
+    return urgencyMap[urgency] || "urgency-medium";
   };
 
   const handleViewDetails = (request) => {
     setSelectedRequest(request);
   };
 
-  const handleAccept = () => {
-    setShowAcceptModal(false);
-    // API call to accept request
-    alert(`Request ${selectedRequest.requestId} accepted!`);
-    setSelectedRequest(null);
+  
+  const handleAccept = async () => {
+    const vendorId = getVendorId();
+    const orderId = selectedRequest?.orderId;
+    const rawData = selectedRequest?._rawData;
+
+    console.log("🔍 Accept Request - Vendor ID:", vendorId);
+    console.log("🔍 Order ID:", orderId);
+    console.log("🔍 Raw Data:", rawData);
+
+    if (!vendorId) {
+      toast.error("Vendor ID not found. Please login again.");
+      return;
+    }
+
+    setAccepting(true);
+
+    try {
+      let response;
+
+      
+      if (orderId) {
+        const apiUrl = `http://localhost:8080/vendor/work/${vendorId}/${orderId}`;
+        console.log("🔍 Trying URL:", apiUrl);
+        response = await axios.post(apiUrl);
+      } 
+      
+      else {
+        const apiUrl = `http://localhost:8080/vendor/work/${vendorId}/accept`;
+        console.log("🔍 Trying alternative URL:", apiUrl);
+        console.log("🔍 Sending data:", rawData);
+       
+        response = await axios.post(apiUrl, {
+          service: rawData.service,
+          timeSlot: rawData.timeSlot,
+          price: rawData.price,
+          address: rawData.address
+        });
+      }
+      
+      console.log("✅ API Response:", response);
+
+      if (response.status === 202 || response.status === 200) {
+        toast.success("Request accepted successfully!");
+        setShowAcceptModal(false);
+        setSelectedRequest(null);
+        
+        // Refresh the list
+        const res = await axios.get("http://localhost:8080/vendor/work");
+        setRawWorkData(res.data);
+        setWorkRequests(adaptWorkRequests(res.data));
+      }
+    } catch (error) {
+      console.error("❌ ERROR:", error);
+      console.error("❌ Error Response:", error.response?.data);
+      
+      // Show the backend error message if available
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error ||
+                          error.message;
+      
+      toast.error(`Failed: ${errorMessage}`);
+      
+      // If it's a 500 error, show what the backend needs
+      if (error.response?.status === 500) {
+        console.log("💡 Your backend might need:");
+        console.log("   1. The orderId to be included in /vendor/work response");
+        console.log("   2. Or a different accept endpoint that doesn't require orderId");
+        console.log("   3. Check your backend logs for the exact error");
+        
+        toast.info("Check console for backend requirements", { autoClose: 5000 });
+      }
+    } finally {
+      setAccepting(false);
+    }
   };
 
   const handleReject = () => {
     if (!rejectReason) {
-      alert('Please select a reason for rejection');
+      toast.warning("Please select a reason for rejection");
       return;
     }
+    
+    toast.info(`Request declined: ${rejectReason}`);
     setShowRejectModal(false);
-    // API call to reject request
-    alert(`Request ${selectedRequest.requestId} rejected. Reason: ${rejectReason}`);
-    setRejectReason('');
+    setRejectReason("");
     setSelectedRequest(null);
   };
 
-  const filteredRequests = filter === 'all' 
-    ? workRequests 
-    : workRequests.filter(req => req.urgency === filter);
+  const filteredRequests =
+    filter === "all"
+      ? workRequests
+      : workRequests.filter((req) => req.urgency === filter);
+
+  if (loading) {
+    return (
+      <div className="work-details-container">
+        <div className="loading-spinner">
+          <div className="spinner"></div>
+          <p>Loading work requests...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="work-details-container">
-      {/* Header */}
+
+      {/* ===================== HEADER ===================== */}
       <div className="work-header">
         <div className="container">
           <div className="header-top">
             <div>
               <h1 className="page-title">Available Work Requests</h1>
-              <p className="page-subtitle">Review and accept requests that match your skills</p>
+              <p className="page-subtitle">
+                Review and accept requests that match your skills
+              </p>
             </div>
             <div className="header-stats">
               <div className="stat-box">
@@ -222,160 +254,128 @@ const viewWorkDetails = () => {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="filters-section">
-        <div className="container">
-          <div className="filters-wrapper">
-            <div className="filter-buttons">
-              <button 
-                className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
-                onClick={() => setFilter('all')}
-              >
-                All Requests
-              </button>
-              <button 
-                className={`filter-btn ${filter === 'urgent' ? 'active' : ''}`}
-                onClick={() => setFilter('urgent')}
-              >
-                <i className="bi bi-exclamation-circle"></i> Urgent
-              </button>
-              <button 
-                className={`filter-btn ${filter === 'high' ? 'active' : ''}`}
-                onClick={() => setFilter('high')}
-              >
-                High Priority
-              </button>
-              <button 
-                className={`filter-btn ${filter === 'medium' ? 'active' : ''}`}
-                onClick={() => setFilter('medium')}
-              >
-                Medium
-              </button>
-            </div>
-            <div className="sort-dropdown">
-              <i className="bi bi-funnel"></i>
-              <select className="form-select">
-                <option>Sort by: Earnings (High to Low)</option>
-                <option>Sort by: Distance (Near to Far)</option>
-                <option>Sort by: Match Score</option>
-                <option>Sort by: Time Posted</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
+      {/* ===================== MAIN ===================== */}
       <div className="work-content">
         <div className="container">
+
           {!selectedRequest ? (
             <div className="requests-grid">
-              {filteredRequests.map((request) => (
-                <div key={request.requestId} className="request-card">
-                  {/* Card Header */}
-                  <div className="request-card-header">
-                    <div className="request-meta">
-                      <span className={`urgency-badge ${getUrgencyClass(request.urgency)}`}>
-                        {request.urgency === 'urgent' && <i className="bi bi-lightning-fill"></i>}
-                        {request.urgency.toUpperCase()}
-                      </span>
-                      <span className="posted-time">
-                        <i className="bi bi-clock"></i> {request.postedAt}
-                      </span>
-                    </div>
-                    <div className="match-score">
-                      <div className="match-circle">{request.matchScore}%</div>
-                      <span>Match</span>
-                    </div>
-                  </div>
-
-                  {/* Service Info */}
-                  <div className="service-info">
-                    <h3 className="service-title">{request.serviceName}</h3>
-                    <span className="service-category">{request.serviceCategory}</span>
-                  </div>
-
-                  {/* Earnings Highlight */}
-                  <div className="earnings-box">
-                    <div className="earnings-main">
-                      <label>You'll Earn</label>
-                      <div className="earnings-value">₹{request.earnings.yourEarnings}</div>
-                    </div>
-                    {request.earnings.bonus > 0 && (
-                      <div className="bonus-badge">
-                        <i className="bi bi-gift"></i> +₹{request.earnings.bonus} Bonus
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Quick Details Grid */}
-                  <div className="quick-details-grid">
-                    <div className="detail-item">
-                      <i className="bi bi-calendar3"></i>
-                      <div>
-                        <label>Date</label>
-                        <p>{request.serviceDate}</p>
-                      </div>
-                    </div>
-                    <div className="detail-item">
-                      <i className="bi bi-clock-history"></i>
-                      <div>
-                        <label>Time</label>
-                        <p>{request.serviceTime}</p>
-                      </div>
-                    </div>
-                    <div className="detail-item">
-                      <i className="bi bi-geo-alt-fill"></i>
-                      <div>
-                        <label>Location</label>
-                        <p>{request.serviceAddress.area} ({request.serviceAddress.distance})</p>
-                      </div>
-                    </div>
-                    <div className="detail-item">
-                      <i className="bi bi-hourglass-split"></i>
-                      <div>
-                        <label>Duration</label>
-                        <p>{request.duration}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Customer Info Preview */}
-                  <div className="customer-preview">
-                    <img src={request.customer.profileImage} alt={request.customer.name} />
-                    <div className="customer-info">
-                      <h5>{request.customer.name}</h5>
-                      <div className="customer-rating">
-                        <i className="bi bi-star-fill"></i>
-                        <span>{request.customer.rating}</span>
-                        <span className="booking-count">({request.customer.totalBookings} bookings)</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Requirements Tags */}
-                  <div className="requirements-tags">
-                    <span className={`req-tag ${request.earnings.paymentStatus === 'Prepaid' ? 'tag-success' : 'tag-warning'}`}>
-                      <i className="bi bi-credit-card"></i> {request.earnings.paymentStatus}
-                    </span>
-                    {request.requirements.parkingAvailable && (
-                      <span className="req-tag"><i className="bi bi-p-square"></i> Parking</span>
-                    )}
-                    {request.requirements.petFriendly && (
-                      <span className="req-tag"><i className="bi bi-heart"></i> Pet Friendly</span>
-                    )}
-                  </div>
-
-                  {/* Action Button */}
-                  <button 
-                    className="btn-view-details"
-                    onClick={() => handleViewDetails(request)}
-                  >
-                    View Full Details & Accept
-                    <i className="bi bi-arrow-right"></i>
-                  </button>
+              {filteredRequests.length === 0 ? (
+                <div className="no-requests">
+                  <i className="bi bi-inbox"></i>
+                  <h3>No work requests available</h3>
+                  <p>Check back later for new opportunities</p>
                 </div>
-              ))}
+              ) : (
+                filteredRequests.map((request) => (
+                  <div key={request.requestId} className="request-card">
+
+                    {/* CARD HEADER */}
+                    <div className="request-card-header">
+                      <div className="request-meta">
+                        <span
+                          className={`urgency-badge ${getUrgencyClass(
+                            request.urgency
+                          )}`}
+                        >
+                          {request.urgency.toUpperCase()}
+                        </span>
+                        <span className="posted-time">
+                          <i className="bi bi-clock"></i> {request.postedAt}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* SERVICE INFO */}
+                    <div className="service-info">
+                      <h3 className="service-title">
+                        {request.serviceName}
+                      </h3>
+                      <span className="service-category">
+                        {request.serviceCategory}
+                      </span>
+                    </div>
+
+                    {/* EARNINGS */}
+                    <div className="earnings-box">
+                      <label>You&apos;ll Earn</label>
+                      <div className="earnings-value">
+                        ₹{request.earnings.yourEarnings}
+                      </div>
+                    </div>
+
+                    {/* QUICK DETAILS */}
+                    <div className="quick-details-grid">
+                      <div className="detail-item">
+                        <i className="bi bi-calendar3"></i>
+                        <div>
+                          <label>Date</label>
+                          <p>{request.serviceDate}</p>
+                        </div>
+                      </div>
+                      <div className="detail-item">
+                        <i className="bi bi-clock-history"></i>
+                        <div>
+                          <label>Time</label>
+                          <p>{request.serviceTime}</p>
+                        </div>
+                      </div>
+                      <div className="detail-item">
+                        <i className="bi bi-geo-alt-fill"></i>
+                        <div>
+                          <label>Location</label>
+                          <p>
+                            {request.serviceAddress.area} (
+                            {request.serviceAddress.distance})
+                          </p>
+                        </div>
+                      </div>
+                      <div className="detail-item">
+                        <i className="bi bi-hourglass-split"></i>
+                        <div>
+                          <label>Duration</label>
+                          <p>{request.duration}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* CUSTOMER */}
+                    <div className="customer-preview">
+                      <div className="customer-avatar">
+                        {request.customer.name.charAt(0)}
+                      </div>
+                      <div>
+                        <h5>{request.customer.name}</h5>
+                        <span>
+                          ⭐ {request.customer.rating} (
+                          {request.customer.totalBookings} bookings)
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* TAGS */}
+                    <div className="requirements-tags">
+                      <span className="req-tag">
+                        <i className="bi bi-credit-card"></i> {request.earnings.paymentStatus}
+                      </span>
+                      {request.requirements.parkingAvailable && (
+                        <span className="req-tag">
+                          <i className="bi bi-p-square"></i> Parking
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Action Button */}
+                    <button 
+                      className="btn-view-details"
+                      onClick={() => handleViewDetails(request)}
+                    >
+                      View Full Details & Accept
+                      <i className="bi bi-arrow-right"></i>
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           ) : (
             // Detailed View
@@ -386,30 +386,6 @@ const viewWorkDetails = () => {
 
               <div className="row">
                 <div className="col-lg-8">
-                  {/* Earnings Card */}
-                  <div className="detail-card earnings-detail-card">
-                    <div className="earnings-showcase">
-                      <div className="earnings-icon-large">
-                        <i className="bi bi-currency-rupee"></i>
-                      </div>
-                      <div className="earnings-info-large">
-                        <h2>Your Total Earnings</h2>
-                        <div className="earnings-amount-large">₹{selectedRequest.earnings.yourEarnings}</div>
-                        {selectedRequest.earnings.bonus > 0 && (
-                          <div className="bonus-info">
-                            <i className="bi bi-gift-fill"></i>
-                            Includes ₹{selectedRequest.earnings.bonus} bonus for quick acceptance
-                          </div>
-                        )}
-                      </div>
-                      <div className="payment-method-badge">
-                        <i className={selectedRequest.earnings.paymentStatus === 'Prepaid' ? 'bi bi-check-circle-fill' : 'bi bi-cash'}></i>
-                        {selectedRequest.earnings.paymentStatus}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Service Details */}
                   <div className="detail-card">
                     <div className="card-header-detail">
                       <i className="bi bi-briefcase-fill"></i>
@@ -422,168 +398,18 @@ const viewWorkDetails = () => {
                       <h4 className="service-name-large">{selectedRequest.serviceName}</h4>
                       <p className="category-text">{selectedRequest.serviceCategory}</p>
                       
-                      <div className="details-grid">
-                        <div className="detail-box">
-                          <i className="bi bi-calendar-check-fill"></i>
-                          <div>
-                            <label>Service Date</label>
-                            <p>{selectedRequest.serviceDate}</p>
-                          </div>
-                        </div>
-                        <div className="detail-box">
-                          <i className="bi bi-clock-fill"></i>
-                          <div>
-                            <label>Time Slot</label>
-                            <p>{selectedRequest.serviceTime}</p>
-                          </div>
-                        </div>
-                        <div className="detail-box">
-                          <i className="bi bi-hourglass-split"></i>
-                          <div>
-                            <label>Duration</label>
-                            <p>{selectedRequest.duration}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="tasks-detail-section">
-                        <h5>Tasks to be Completed:</h5>
-                        <ul className="tasks-detail-list">
-                          {selectedRequest.taskDetails.map((task, index) => (
-                            <li key={index}>
-                              <i className="bi bi-check-circle-fill"></i>
-                              {task}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Customer Details */}
-                  <div className="detail-card">
-                    <div className="card-header-detail">
-                      <i className="bi bi-person-fill"></i>
-                      <h3>Customer Information</h3>
-                    </div>
-                    <div className="card-body-detail">
-                      <div className="customer-detail-profile">
-                        <img src={selectedRequest.customer.profileImage} alt={selectedRequest.customer.name} />
-                        <div className="customer-detail-info">
-                          <h4>{selectedRequest.customer.name}</h4>
-                          <div className="customer-stats">
-                            <span className="rating-badge">
-                              <i className="bi bi-star-fill"></i>
-                              {selectedRequest.customer.rating}
-                            </span>
-                            <span className="bookings-badge">
-                              {selectedRequest.customer.totalBookings} Total Bookings
-                            </span>
-                          </div>
-                          <a href={`tel:${selectedRequest.customer.phone}`} className="phone-link">
-                            <i className="bi bi-telephone-fill"></i>
-                            {selectedRequest.customer.phone}
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Location Details */}
-                  <div className="detail-card">
-                    <div className="card-header-detail">
-                      <i className="bi bi-geo-alt-fill"></i>
-                      <h3>Service Location</h3>
-                    </div>
-                    <div className="card-body-detail">
-                      <div className="location-header">
-                        <div className="location-type">
-                          <i className="bi bi-building"></i>
-                          {selectedRequest.serviceAddress.locationType} - {selectedRequest.serviceAddress.floor}
-                        </div>
-                        <div className="distance-badge">
-                          <i className="bi bi-pin-map-fill"></i>
-                          {selectedRequest.serviceAddress.distance} away
-                        </div>
-                      </div>
-                      <div className="address-full">
-                        <p>{selectedRequest.serviceAddress.fullAddress}</p>
-                      </div>
-                      <button className="btn-navigate">
-                        <i className="bi bi-navigation-fill"></i>
-                        Get Directions
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Requirements & Instructions */}
-                  <div className="detail-card">
-                    <div className="card-header-detail">
-                      <i className="bi bi-info-circle-fill"></i>
-                      <h3>Requirements & Special Instructions</h3>
-                    </div>
-                    <div className="card-body-detail">
-                      <div className="requirements-section">
-                        <div className="requirement-item">
-                          <i className={`bi ${selectedRequest.requirements.materialsProvided ? 'bi-x-circle-fill text-danger' : 'bi-check-circle-fill text-success'}`}></i>
-                          <div>
-                            <strong>Materials</strong>
-                            <p>{selectedRequest.requirements.materialsProvided ? 'Provided by customer' : 'You need to bring all materials'}</p>
-                          </div>
-                        </div>
-                        {selectedRequest.requirements.specialInstructions && (
-                          <div className="special-instructions-box">
-                            <i className="bi bi-chat-square-text-fill"></i>
-                            <p>{selectedRequest.requirements.specialInstructions}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Payment Breakdown */}
-                  <div className="detail-card">
-                    <div className="card-header-detail">
-                      <i className="bi bi-receipt-cutoff"></i>
-                      <h3>Payment Breakdown</h3>
-                    </div>
-                    <div className="card-body-detail">
-                      <div className="payment-breakdown-detail">
-                        <div className="payment-row-detail">
-                          <span>Service Base Amount</span>
-                          <span>₹{selectedRequest.earnings.baseAmount}</span>
-                        </div>
-                        <div className="payment-row-detail">
-                          <span>GST (18%)</span>
-                          <span>₹{selectedRequest.earnings.gst}</span>
-                        </div>
-                        <div className="payment-row-detail total">
-                          <span><strong>Total Charged to Customer</strong></span>
-                          <span><strong>₹{selectedRequest.earnings.baseAmount + selectedRequest.earnings.gst}</strong></span>
-                        </div>
-                        <div className="divider-line"></div>
-                        <div className="payment-row-detail commission">
-                          <span>Platform Commission (10%)</span>
-                          <span>-₹{selectedRequest.earnings.platformCommission}</span>
-                        </div>
-                        {selectedRequest.earnings.bonus > 0 && (
-                          <div className="payment-row-detail bonus">
-                            <span>Quick Acceptance Bonus</span>
-                            <span className="text-success">+₹{selectedRequest.earnings.bonus}</span>
-                          </div>
-                        )}
-                        <div className="payment-row-detail final">
-                          <span><strong>Your Final Earnings</strong></span>
-                          <span className="final-amount"><strong>₹{selectedRequest.earnings.yourEarnings}</strong></span>
-                        </div>
+                      <div style={{marginTop: '1.5rem'}}>
+                        <p><strong>📅 Date:</strong> {selectedRequest.serviceDate}</p>
+                        <p><strong>🕐 Time:</strong> {selectedRequest.serviceTime}</p>
+                        <p><strong>📍 Location:</strong> {selectedRequest.serviceAddress.fullAddress}</p>
+                        <p><strong>💰 You'll Earn:</strong> ₹{selectedRequest.earnings.yourEarnings}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Sidebar Actions */}
                 <div className="col-lg-4">
-                  <div className="action-sidebar sticky-action">
+                  <div className="action-sidebar">
                     <div className="action-card-detail">
                       <h4>Decision Time</h4>
                       <p className="action-subtitle">Review all details and make your decision</p>
@@ -591,43 +417,37 @@ const viewWorkDetails = () => {
                       <button 
                         className="btn-action-large btn-accept"
                         onClick={() => setShowAcceptModal(true)}
+                        disabled={accepting}
                       >
                         <i className="bi bi-check-circle-fill"></i>
-                        Accept Request
+                        {accepting ? "Processing..." : "Accept Request"}
                       </button>
                       
                       <button 
                         className="btn-action-large btn-reject"
                         onClick={() => setShowRejectModal(true)}
+                        disabled={accepting}
                       >
                         <i className="bi bi-x-circle-fill"></i>
                         Decline Request
                       </button>
-
-                      <div className="timer-warning">
-                        <i className="bi bi-alarm-fill"></i>
-                        <p>This request expires in <strong>25 minutes</strong></p>
-                      </div>
                     </div>
 
+                    {/* Info Card */}
                     <div className="info-sidebar-card">
-                      <h4>Why This Match?</h4>
+                      <h4>Order Info</h4>
                       <div className="match-reasons">
                         <div className="match-reason-item">
-                          <i className="bi bi-geo-alt"></i>
-                          <span>Close to your location</span>
+                          <i className="bi bi-tag"></i>
+                          <span>{selectedRequest.serviceName}</span>
                         </div>
                         <div className="match-reason-item">
-                          <i className="bi bi-star"></i>
-                          <span>Matches your expertise</span>
-                        </div>
-                        <div className="match-reason-item">
-                          <i className="bi bi-clock"></i>
-                          <span>Fits your schedule</span>
+                          <i className="bi bi-calendar"></i>
+                          <span>{selectedRequest.serviceDate}</span>
                         </div>
                         <div className="match-reason-item">
                           <i className="bi bi-cash"></i>
-                          <span>Good earnings potential</span>
+                          <span>₹{selectedRequest.earnings.yourEarnings}</span>
                         </div>
                       </div>
                     </div>
@@ -640,23 +460,39 @@ const viewWorkDetails = () => {
       </div>
 
       {/* Accept Modal */}
-      {showAcceptModal && (
-        <div className="modal-overlay" onClick={() => setShowAcceptModal(false)}>
+      {showAcceptModal && selectedRequest && (
+        <div className="modal-overlay" onClick={() => !accepting && setShowAcceptModal(false)}>
           <div className="modal-content-custom" onClick={(e) => e.stopPropagation()}>
             <div className="modal-icon success">
               <i className="bi bi-check-circle-fill"></i>
             </div>
             <h3>Accept This Request?</h3>
-            <p>By accepting, you commit to completing this service on the scheduled date and time. The customer will be notified immediately.</p>
+            <p>By accepting, you commit to completing this service on the scheduled date and time.</p>
             <div className="modal-highlight">
-              <strong>You'll earn: ₹{selectedRequest.earnings.yourEarnings}</strong>
+              <strong>You&apos;ll earn: ₹{selectedRequest.earnings.yourEarnings}</strong>
             </div>
             <div className="modal-actions-custom">
-              <button className="btn-modal-custom btn-cancel-custom" onClick={() => setShowAcceptModal(false)}>
+              <button 
+                className="btn-modal-custom btn-cancel-custom" 
+                onClick={() => setShowAcceptModal(false)}
+                disabled={accepting}
+              >
                 Go Back
               </button>
-              <button className="btn-modal-custom btn-confirm-custom" onClick={handleAccept}>
-                Yes, Accept Request
+              <button 
+                className="btn-modal-custom btn-confirm-custom" 
+                onClick={handleAccept}
+                disabled={accepting}
+              >
+                {accepting ? (
+                  <>
+                    <i className="bi bi-hourglass-split"></i> Processing...
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-check-circle-fill"></i> Yes, Accept Request
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -671,7 +507,7 @@ const viewWorkDetails = () => {
               <i className="bi bi-x-circle-fill"></i>
             </div>
             <h3>Decline This Request?</h3>
-            <p>Please let us know why you're declining this request. This helps us match you better in the future.</p>
+            <p>Please select a reason for rejection.</p>
             <div className="reject-reasons">
               <label className="reason-option">
                 <input 
@@ -724,8 +560,68 @@ const viewWorkDetails = () => {
           </div>
         </div>
       )}
+
+      <style>{`
+        .loading-spinner {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-height: 60vh;
+          gap: 1.5rem;
+        }
+
+        .spinner {
+          width: 50px;
+          height: 50px;
+          border: 4px solid #e5e7eb;
+          border-top-color: #2563eb;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .no-requests {
+          text-align: center;
+          padding: 5rem 2rem;
+          background: #ffffff;
+          border-radius: 16px;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+          grid-column: 1 / -1;
+        }
+
+        .no-requests i {
+          font-size: 5rem;
+          color: #d1d5db;
+          margin-bottom: 1.5rem;
+        }
+
+        .no-requests h3 {
+          font-size: 1.75rem;
+          color: #000000;
+          margin-bottom: 0.75rem;
+        }
+
+        .no-requests p {
+          color: #374151;
+          font-size: 1.125rem;
+        }
+
+        .card-body-detail p {
+          margin-bottom: 0.75rem;
+          line-height: 1.6;
+        }
+      `}</style>
     </div>
   );
 };
 
-export default viewWorkDetails;
+export default ViewWorkDetails;0
