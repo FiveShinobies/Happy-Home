@@ -1,144 +1,65 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { toast } from 'react-toastify';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap-icons/font/bootstrap-icons.css';
+import React, { useState } from 'react';
+import './editVendorProfile.css';
 
 const EditVendorProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
-  const [loading, setLoading] = useState(true);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // Vendor ID - You can get this from auth context or route params
-  const vendorId = 1; // Replace with actual vendor ID
-  const DEFAULT_PROFILE_PIC = "https://commons.wikimedia.org/wiki/File:Twitter_default_profile_400x400.png";
-
-  // Initial state structure
+  // Vendor profile data
   const [profileData, setProfileData] = useState({
     personalInfo: {
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      alternatePhone: '',
-      dateOfBirth: '',
-      gender: '',
+      firstName: 'Rajesh',
+      lastName: 'Kumar',
+      email: 'rajesh.kumar@email.com',
+      phone: '+91 98765 43210',
+      alternatePhone: '+91 98765 43211',
+      dateOfBirth: '1990-05-15',
+      gender: 'Male',
       profileImage: 'https://via.placeholder.com/150',
-      aadharNumber: '',
-      panNumber: ''
+      aadharNumber: '1234 5678 9012',
+      panNumber: 'ABCDE1234F'
     },
     addressInfo: {
-      street: '',
-      area: '',
-      city: '',
-      state: '',
-      pincode: '',
-      landmark: ''
+      street: 'Flat 301, Tower B, Green Valley',
+      area: 'Koramangala',
+      city: 'Bangalore',
+      state: 'Karnataka',
+      pincode: '560095',
+      landmark: 'Near City Mall'
     },
     professionalInfo: {
-      expertise:  [],
-      experienceYears: 0,
-      workingDays: [],
-      languages: []
+      expertise: ['Home Cleaning', 'Deep Cleaning', 'Kitchen Cleaning'],
+      experienceYears: 5,
+      workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+      workingHoursStart: '09:00',
+      workingHoursEnd: '20:00',
+      vehicleType: 'Two Wheeler',
+      languages: ['English', 'Hindi', 'Kannada'],
+      certifications: 'Professional Cleaning Certificate'
     },
     bankDetails: {
-      accountHolderName: '',
-      accountNumber: '',
-      ifscCode: '',
-      bankName: '',
-      branchName: '',
-      upiId: ''
+      accountHolderName: 'Rajesh Kumar',
+      accountNumber: '1234567890123456',
+      ifscCode: 'HDFC0001234',
+      bankName: 'HDFC Bank',
+      branchName: 'Koramangala Branch',
+      upiId: 'rajesh@paytm'
+    },
+    pricingInfo: {
+      baseRate: 299,
+      maxTravelDistance: 10
     },
     stats: {
-      totalServices: 0,
-      rating: 0,
-      reviews: 0,
-      joinedDate: ''
+      totalServices: 342,
+      rating: 4.7,
+      reviews: 284,
+      completionRate: 98,
+      joinedDate: 'January 2020'
     }
   });
 
   const [editData, setEditData] = useState({ ...profileData });
-
-  // Fetch vendor data from backend
-  useEffect(() => {
-    fetchVendorData();
-  }, []);
-
-  const fetchVendorData = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch all vendor data in parallel
-      const [profileRes, addressRes, bankingRes] = await Promise.all([
-        axios.get(`http://localhost:8080/vendor/1/profile`),
-        axios.get(`http://localhost:8080/vendor/1/address`),
-        axios.get(`http://localhost:8080/vendor/1/banking`)
-      ]);
-
-      const profile = profileRes.data;
-      const address = addressRes.data;
-      const banking = bankingRes.data;
-
-      console.log(profileRes);
-      console.log(addressRes);
-      console.log(bankingRes);
-
-      // Map backend data to frontend structure
-      const mappedData = {
-        personalInfo: {
-          firstName: profile.firstName,
-          lastName: profile.lastName,
-          email: profile.email,
-          phone: profile.phone,
-          // alternatePhone: profile.alternatePhone,
-          dateOfBirth: profile.dateOfBirth,
-          gender: profile.gender,
-          profileImage:  profile.profileImage?.trim()
-                      ? profile.profileImage
-                      : DEFAULT_PROFILE_PIC,
-          aadharNumber: profile.aadharNumber,
-          panNumber: profile.panNumber
-        },
-        addressInfo: {
-          street: address.homeNo || '',
-          Town: '',
-          city: address.city || '',
-          state: address.state || '',
-          pincode: address.pincode || '',
-          landmark: ''
-        },
-        professionalInfo: {
-          expertise: profile.servicesProvided ?? [],
-          experienceYears: profile.experience || 0,
-          workingDays: profile.workingDays || [],
-          languages: profile.languages ?? []
-        },
-        bankDetails: {
-          accountHolderName: banking.holderName || '',
-          accountNumber: banking.accountNo || '',
-          ifscCode: banking.ifscCode || '',
-          bankName: banking.bankName || '',
-          branchName: banking.branchName || '',
-          upiId: banking.upiId || ''
-        },
-        stats: {
-          totalServices: profile.totalServices || 0,
-          rating: profile.rating || 0,
-          reviews: profile.reviews || 0,
-          joinedDate: profile.joinedDate || ''
-        }
-      };
-
-      setProfileData(mappedData);
-      setEditData(mappedData);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching vendor data:', error);
-      toast.error('Failed to load profile data');
-      setLoading(false);
-    }
-  };
 
   const handleInputChange = (section, field, value) => {
     setEditData(prev => ({
@@ -167,42 +88,11 @@ const EditVendorProfile = () => {
     });
   };
 
-  const handleSave = async () => {
-    try {
-      // Prepare request body for backend
-      const requestBody = {
-        firstName: editData.personalInfo.firstName,
-        lastName: editData.personalInfo.lastName,
-        email: editData.personalInfo.email,
-        phone: editData.personalInfo.phone,
-        dateOfBirth: editData.personalInfo.dateOfBirth,
-        
-        // Address
-        homeNo: editData.addressInfo.street,
-        city: editData.addressInfo.city,
-        state: editData.addressInfo.state,
-        pincode: editData.addressInfo.pincode,
-        
-        // Professional
-        expertise: editData.professionalInfo.expertise,
-        languages: editData.professionalInfo.languages,
-        
-      };
-
-      await axios.put(
-        `http://localhost:8080/vendor/${vendorId}/profile`,
-        requestBody
-      );
-
-      setProfileData({ ...editData });
-      setIsEditing(false);
-      setShowSuccessModal(true);
-      toast.success('Profile updated successfully!');
-      setTimeout(() => setShowSuccessModal(false), 3000);
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast.error('Failed to update profile');
-    }
+  const handleSave = () => {
+    setProfileData({ ...editData });
+    setIsEditing(false);
+    setShowSuccessModal(true);
+    setTimeout(() => setShowSuccessModal(false), 3000);
   };
 
   const handleCancel = () => {
@@ -212,193 +102,61 @@ const EditVendorProfile = () => {
 
   const displayData = isEditing ? editData : profileData;
 
-  if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    );
-  }
-
-  const styles = {
-    pageBackground: {
-      minHeight: '100vh',
-      background: '#ffffff'
-    },
-    header: {
-      background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
-      color: '#ffffff',
-      padding: '2rem 0',
-      marginBottom: '2rem'
-    },
-    profileImage: {
-      width: '120px',
-      height: '120px',
-      borderRadius: '50%',
-      border: '4px solid #ffffff',
-      objectFit: 'cover'
-    },
-    verifiedBadge: {
-      background: '#22c55e',
-      color: '#ffffff',
-      padding: '0.25rem 0.75rem',
-      borderRadius: '1rem',
-      fontSize: '0.875rem',
-      fontWeight: '600',
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '0.25rem',
-      marginTop: '0.5rem'
-    },
-    statBox: {
-      background: 'rgba(255, 255, 255, 0.2)',
-      backdropFilter: 'blur(10px)',
-      padding: '1rem',
-      borderRadius: '0.75rem',
-      textAlign: 'center',
-      minWidth: '100px'
-    },
-    card: {
-      background: '#ffffff',
-      borderRadius: '1rem',
-      border: '1px solid #e5e7eb',
-      padding: '2rem',
-      marginBottom: '1.5rem'
-    },
-    tab: {
-      background: 'transparent',
-      border: 'none',
-      borderBottom: '3px solid transparent',
-      padding: '1rem 1.5rem',
-      fontSize: '1rem',
-      fontWeight: '500',
-      color: '#6b7280',
-      cursor: 'pointer',
-      transition: 'all 0.3s'
-    },
-    tabActive: {
-      color: '#1e40af',
-      borderBottomColor: '#1e40af'
-    },
-    input: {
-      width: '100%',
-      padding: '0.75rem',
-      border: '1px solid #d1d5db',
-      borderRadius: '0.5rem',
-      fontSize: '1rem'
-    },
-    displayValue: {
-      padding: '0.75rem',
-      background: '#f9fafb',
-      borderRadius: '0.5rem',
-      color: '#000000',
-      minHeight: '48px',
-      display: 'flex',
-      alignItems: 'center'
-    },
-    maskedValue: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.5rem',
-      color: '#6b7280'
-    },
-    tag: {
-      background: '#1e40af',
-      color: '#ffffff',
-      padding: '0.5rem 1rem',
-      borderRadius: '0.5rem',
-      fontSize: '0.875rem',
-      fontWeight: '500',
-      display: 'inline-block',
-      margin: '0.25rem'
-    },
-    infoAlert: {
-      background: '#dbeafe',
-      border: '1px solid #3b82f6',
-      color: '#1e40af',
-      padding: '1rem',
-      borderRadius: '0.5rem',
-      marginTop: '1rem',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.5rem'
-    },
-    successAlert: {
-      background: '#d1fae5',
-      border: '1px solid #22c55e',
-      color: '#166534'
-    }
-  };
-
   return (
-    <div style={styles.pageBackground}>
+    <div className="vendor-profile-page">
       {/* Header */}
-      <div style={styles.header}>
+      <div className="profile-header">
         <div className="container">
-          <div className="row align-items-center">
-            <div className="col-auto">
-              {/* <img 
-                src={displayData.personalInfo.profileImage || DEFAULT_PROFILE_PIC} 
-                alt="Profile" 
-                style={styles.profileImage}
-              /> */}
-              <div style={styles.verifiedBadge}>
+          <div className="header-content">
+            <div className="profile-image-section">
+              <img src={displayData.personalInfo.profileImage} alt="Profile" className="profile-img" />
+              <div className="verified-badge">
                 <i className="bi bi-patch-check-fill"></i> Verified
               </div>
             </div>
             
-            <div className="col">
-              <h1 className="display-5 fw-bold mb-2">
-                {displayData.personalInfo.firstName} {displayData.personalInfo.lastName}
-              </h1>
-              <p className="mb-3 opacity-75">
-                {displayData.professionalInfo.expertise.join(' • ')}
-              </p>
+            <div className="profile-info">
+              <h1>{displayData.personalInfo.firstName} {displayData.personalInfo.lastName}</h1>
+              <p className="expertise-text">{displayData.professionalInfo.expertise.join(' • ')}</p>
               
-              <div className="d-flex gap-3 flex-wrap">
-                <div style={styles.statBox}>
-                  <i className="bi bi-star-fill d-block mb-1"></i>
-                  <div className="fw-bold">{displayData.stats.rating}</div>
-                  <small className="opacity-75">Rating</small>
+              <div className="stats-row">
+                <div className="stat-box">
+                  <i className="bi bi-star-fill"></i>
+                  <span className="stat-value">{displayData.stats.rating}</span>
+                  <span className="stat-label">Rating</span>
                 </div>
-                <div style={styles.statBox}>
-                  <i className="bi bi-check-circle-fill d-block mb-1"></i>
-                  <div className="fw-bold">{displayData.stats.totalServices}</div>
-                  <small className="opacity-75">Services</small>
+                <div className="stat-box">
+                  <i className="bi bi-check-circle-fill"></i>
+                  <span className="stat-value">{displayData.stats.totalServices}</span>
+                  <span className="stat-label">Services</span>
                 </div>
-                <div style={styles.statBox}>
-                  <i className="bi bi-chat-quote-fill d-block mb-1"></i>
-                  <div className="fw-bold">{displayData.stats.reviews}</div>
-                  <small className="opacity-75">Reviews</small>
+                <div className="stat-box">
+                  <i className="bi bi-chat-quote-fill"></i>
+                  <span className="stat-value">{displayData.stats.reviews}</span>
+                  <span className="stat-label">Reviews</span>
+                </div>
+                <div className="stat-box">
+                  <i className="bi bi-graph-up"></i>
+                  <span className="stat-value">{displayData.stats.completionRate}%</span>
+                  <span className="stat-label">Success</span>
                 </div>
               </div>
             </div>
 
-            <div className="col-auto">
+            <div className="header-actions">
               {!isEditing ? (
-                <button 
-                  className="btn btn-light btn-lg"
-                  onClick={() => setIsEditing(true)}
-                >
-                  <i className="bi bi-pencil-square me-2"></i>
+                <button className="btn-edit" onClick={() => setIsEditing(true)}>
+                  <i className="bi bi-pencil-square"></i>
                   Edit Profile
                 </button>
               ) : (
-                <div className="d-flex gap-2">
-                  <button 
-                    className="btn btn-success btn-lg"
-                    onClick={handleSave}
-                  >
-                    <i className="bi bi-check-lg me-2"></i>
+                <div className="edit-btns">
+                  <button className="btn-save" onClick={handleSave}>
+                    <i className="bi bi-check-lg"></i>
                     Save
                   </button>
-                  <button 
-                    className="btn btn-outline-light btn-lg"
-                    onClick={handleCancel}
-                  >
-                    <i className="bi bi-x-lg me-2"></i>
+                  <button className="btn-cancel-edit" onClick={handleCancel}>
+                    <i className="bi bi-x-lg"></i>
                     Cancel
                   </button>
                 </div>
@@ -409,486 +167,460 @@ const EditVendorProfile = () => {
       </div>
 
       {/* Tabs */}
-      <div className="container mb-4">
-        <div className="d-flex border-bottom">
-          {[
-            { key: 'personal', icon: 'bi-person-fill', label: 'Personal' },
-            { key: 'address', icon: 'bi-geo-alt-fill', label: 'Address' },
-            { key: 'professional', icon: 'bi-briefcase-fill', label: 'Professional' },
-            { key: 'banking', icon: 'bi-bank', label: 'Banking' }
-          ].map(tab => (
-            <button
-              key={tab.key}
-              style={{
-                ...styles.tab,
-                ...(activeTab === tab.key ? styles.tabActive : {})
-              }}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              <i className={`bi ${tab.icon} me-2`}></i>
-              {tab.label}
+      <div className="tabs-section">
+        <div className="container">
+          <div className="tabs">
+            <button className={`tab ${activeTab === 'personal' ? 'active' : ''}`} onClick={() => setActiveTab('personal')}>
+              <i className="bi bi-person-fill"></i> Personal
             </button>
-          ))}
+            <button className={`tab ${activeTab === 'address' ? 'active' : ''}`} onClick={() => setActiveTab('address')}>
+              <i className="bi bi-geo-alt-fill"></i> Address
+            </button>
+            <button className={`tab ${activeTab === 'professional' ? 'active' : ''}`} onClick={() => setActiveTab('professional')}>
+              <i className="bi bi-briefcase-fill"></i> Professional
+            </button>
+            <button className={`tab ${activeTab === 'banking' ? 'active' : ''}`} onClick={() => setActiveTab('banking')}>
+              <i className="bi bi-bank"></i> Banking
+            </button>
+            <button className={`tab ${activeTab === 'pricing' ? 'active' : ''}`} onClick={() => setActiveTab('pricing')}>
+              <i className="bi bi-currency-rupee"></i> Pricing
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="container pb-5">
-        {/* Personal Tab */}
-        {activeTab === 'personal' && (
-          <div style={styles.card}>
-            <h2 className="h4 fw-bold mb-4" style={{ color: '#000000' }}>Personal Information</h2>
-            <div className="row g-3">
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">First Name *</label>
-                {isEditing ? (
-                  <input 
-                    type="text" 
-                    style={styles.input}
-                    value={displayData.personalInfo.firstName}
-                    onChange={(e) => handleInputChange('personalInfo', 'firstName', e.target.value)} 
-                  />
-                ) : (
-                  <div style={styles.displayValue}>{displayData.personalInfo.firstName}</div>
-                )}
-              </div>
+      <div className="content-section">
+        <div className="container">
+          {/* Personal Tab */}
+          {activeTab === 'personal' && (
+            <div className="content-card">
+              <h2>Personal Information</h2>
+              <div className="form-grid">
+                <div className="form-field">
+                  <label>First Name *</label>
+                  {isEditing ? (
+                    <input type="text" className="input-field" value={displayData.personalInfo.firstName}
+                      onChange={(e) => handleInputChange('personalInfo', 'firstName', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.personalInfo.firstName}</div>
+                  )}
+                </div>
 
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Last Name *</label>
-                {isEditing ? (
-                  <input 
-                    type="text" 
-                    style={styles.input}
-                    value={displayData.personalInfo.lastName}
-                    onChange={(e) => handleInputChange('personalInfo', 'lastName', e.target.value)} 
-                  />
-                ) : (
-                  <div style={styles.displayValue}>{displayData.personalInfo.lastName}</div>
-                )}
-              </div>
+                <div className="form-field">
+                  <label>Last Name *</label>
+                  {isEditing ? (
+                    <input type="text" className="input-field" value={displayData.personalInfo.lastName}
+                      onChange={(e) => handleInputChange('personalInfo', 'lastName', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.personalInfo.lastName}</div>
+                  )}
+                </div>
 
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Email *</label>
-                {isEditing ? (
-                  <input 
-                    type="email" 
-                    style={styles.input}
-                    value={displayData.personalInfo.email}
-                    onChange={(e) => handleInputChange('personalInfo', 'email', e.target.value)} 
-                  />
-                ) : (
-                  <div style={styles.displayValue}>{displayData.personalInfo.email}</div>
-                )}
-              </div>
+                <div className="form-field">
+                  <label>Email *</label>
+                  {isEditing ? (
+                    <input type="email" className="input-field" value={displayData.personalInfo.email}
+                      onChange={(e) => handleInputChange('personalInfo', 'email', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.personalInfo.email}</div>
+                  )}
+                </div>
 
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Phone *</label>
-                {isEditing ? (
-                  <input 
-                    type="tel" 
-                    style={styles.input}
-                    value={displayData.personalInfo.phone}
-                    onChange={(e) => handleInputChange('personalInfo', 'phone', e.target.value)} 
-                  />
-                ) : (
-                  <div style={styles.displayValue}>{displayData.personalInfo.phone}</div>
-                )}
-              </div>
+                <div className="form-field">
+                  <label>Phone *</label>
+                  {isEditing ? (
+                    <input type="tel" className="input-field" value={displayData.personalInfo.phone}
+                      onChange={(e) => handleInputChange('personalInfo', 'phone', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.personalInfo.phone}</div>
+                  )}
+                </div>
 
+                <div className="form-field">
+                  <label>Alternate Phone</label>
+                  {isEditing ? (
+                    <input type="tel" className="input-field" value={displayData.personalInfo.alternatePhone}
+                      onChange={(e) => handleInputChange('personalInfo', 'alternatePhone', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.personalInfo.alternatePhone}</div>
+                  )}
+                </div>
 
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Date of Birth *</label>
-                {isEditing ? (
-                  <input 
-                    type="date" 
-                    style={styles.input}
-                    value={displayData.personalInfo.dateOfBirth}
-                    onChange={(e) => handleInputChange('personalInfo', 'dateOfBirth', e.target.value)} 
-                  />
-                ) : (
-                  <div style={styles.displayValue}>
-                    {new Date(displayData.personalInfo.dateOfBirth).toLocaleDateString('en-IN')}
-                  </div>
-                )}
-              </div>
+                <div className="form-field">
+                  <label>Date of Birth *</label>
+                  {isEditing ? (
+                    <input type="date" className="input-field" value={displayData.personalInfo.dateOfBirth}
+                      onChange={(e) => handleInputChange('personalInfo', 'dateOfBirth', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{new Date(displayData.personalInfo.dateOfBirth).toLocaleDateString('en-IN')}</div>
+                  )}
+                </div>
 
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Gender *</label>
-                {isEditing ? (
-                  <select 
-                    style={styles.input}
-                    value={displayData.personalInfo.gender}
-                    onChange={(e) => handleInputChange('personalInfo', 'gender', e.target.value)}
-                  >
-                    <option value="">Select Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
-                ) : (
-                  <div style={styles.displayValue}>{displayData.personalInfo.gender}</div>
-                )}
-              </div>
+                <div className="form-field">
+                  <label>Gender *</label>
+                  {isEditing ? (
+                    <select className="input-field" value={displayData.personalInfo.gender}
+                      onChange={(e) => handleInputChange('personalInfo', 'gender', e.target.value)}>
+                      <option>Male</option>
+                      <option>Female</option>
+                      <option>Other</option>
+                    </select>
+                  ) : (
+                    <div className="display-value">{displayData.personalInfo.gender}</div>
+                  )}
+                </div>
 
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Member Since</label>
-                <div style={styles.displayValue}>{displayData.stats.joinedDate}</div>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <h3 className="h5 fw-bold mb-3" style={{ color: '#000000' }}>Identity Documents</h3>
-              <div className="row g-3">
-                <div className="col-md-6">
-                  <label className="form-label fw-semibold">Aadhar Number</label>
-                  <div style={{...styles.displayValue, ...styles.maskedValue}}>
-                    <i className="bi bi-shield-lock-fill text-primary"></i>
-                    XXXXXXXXXXXX{displayData.bankDetails.accountNumber?.slice(-4)}
-                  </div>
-              </div>
-
-              <div className="col-md-6">
-                  <label className="form-label fw-semibold">PAN Number</label>
-                  <div style={{...styles.displayValue, ...styles.maskedValue}}>
-                    <i className="bi bi-shield-lock-fill text-primary"></i>
-                    XXXXX{displayData.personalInfo.panNumber?.slice(-4)}
-                  </div>
+                <div className="form-field">
+                  <label>Member Since</label>
+                  <div className="display-value readonly">{displayData.stats.joinedDate}</div>
                 </div>
               </div>
-              <div style={styles.infoAlert} className="mt-3">
-                <i className="bi bi-info-circle-fill"></i>
-                Identity documents cannot be changed. Contact support for updates.
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* Address Tab */}
-        {activeTab === 'address' && (
-          <div style={styles.card}>
-            <h2 className="h4 fw-bold mb-4" style={{ color: '#000000' }}>Address Information</h2>
-            <div className="row g-3">
-              <div className="col-12">
-                <label className="form-label fw-semibold">Street Address *</label>
-                {isEditing ? (
-                  <input 
-                    type="text" 
-                    style={styles.input}
-                    value={displayData.addressInfo.homeNo}
-                    onChange={(e) => handleInputChange('addressInfo', 'street', e.target.value)} 
-                  />
-                ) : (
-                  <div style={styles.displayValue}>{displayData.addressInfo.street}</div>
-                )}
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Area *</label>
-                {isEditing ? (
-                  <input 
-                    type="text" 
-                    style={styles.input}
-                    value={displayData.addressInfo.area}
-                    onChange={(e) => handleInputChange('addressInfo', 'area', e.target.value)} 
-                  />
-                ) : (
-                  <div style={styles.displayValue}>{displayData.addressInfo.area}</div>
-                )}
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Landmark</label>
-                {isEditing ? (
-                  <input 
-                    type="text" 
-                    style={styles.input}
-                    value={displayData.addressInfo.landmark}
-                    onChange={(e) => handleInputChange('addressInfo', 'landmark', e.target.value)} 
-                  />
-                ) : (
-                  <div style={styles.displayValue}>{displayData.addressInfo.landmark || 'Not provided'}</div>
-                )}
-              </div>
-
-              <div className="col-md-4">
-                <label className="form-label fw-semibold">City *</label>
-                {isEditing ? (
-                  <input 
-                    type="text" 
-                    style={styles.input}
-                    value={displayData.addressInfo.city}
-                    onChange={(e) => handleInputChange('addressInfo', 'city', e.target.value)} 
-                  />
-                ) : (
-                  <div style={styles.displayValue}>{displayData.addressInfo.city}</div>
-                )}
-              </div>
-
-              <div className="col-md-4">
-                <label className="form-label fw-semibold">State *</label>
-                {isEditing ? (
-                  <input 
-                    type="text" 
-                    style={styles.input}
-                    value={displayData.addressInfo.state}
-                    onChange={(e) => handleInputChange('addressInfo', 'state', e.target.value)} 
-                  />
-                ) : (
-                  <div style={styles.displayValue}>{displayData.addressInfo.state}</div>
-                )}
-              </div>
-
-              <div className="col-md-4">
-                <label className="form-label fw-semibold">PIN Code *</label>
-                {isEditing ? (
-                  <input 
-                    type="text" 
-                    style={styles.input}
-                    maxLength="6"
-                    value={displayData.addressInfo.pincode}
-                    onChange={(e) => handleInputChange('addressInfo', 'pincode', e.target.value)} 
-                  />
-                ) : (
-                  <div style={styles.displayValue}>{displayData.addressInfo.pincode}</div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Professional Tab */}
-        {activeTab === 'professional' && (
-          <div style={styles.card}>
-            <h2 className="h4 fw-bold mb-4" style={{ color: '#000000' }}>Professional Information</h2>
-            
-            <div className="mb-4">
-              <label className="form-label fw-semibold">Areas of Expertise *</label>
-              {isEditing ? (
-                <div className="row g-2">
-                  {['Home Cleaning', 'Deep Cleaning', 'Bathroom Cleaning', 'Kitchen Cleaning', 'AC Repair', 'Plumbing', 'Electrical', 'Painting'].map(skill => (
-                    <div key={skill} className="col-md-6">
-                      <div className="form-check">
-                        <input 
-                          className="form-check-input" 
-                          type="checkbox" 
-                          id={`skill-${skill}`}
-                          checked={displayData.professionalInfo.expertise.includes(skill)}
-                          onChange={() => handleArrayToggle('professionalInfo', 'expertise', skill)} 
-                        />
-                        <label className="form-check-label" htmlFor={`skill-${skill}`}>
-                          {skill}
-                        </label>
-                      </div>
+              <div className="identity-docs">
+                <h3>Identity Documents</h3>
+                <div className="form-grid">
+                  <div className="form-field">
+                    <label>Aadhar Number</label>
+                    <div className="display-value masked">
+                      <i className="bi bi-shield-lock-fill"></i>
+                      XXXX XXXX {displayData.personalInfo.aadharNumber.slice(-4)}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div>
-                  {displayData.professionalInfo.expertise.map(skill => (
-                    <span key={skill} style={styles.tag}>{skill}</span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="mb-4">
-              <label className="form-label fw-semibold">Experience (Years) *</label>
-              {isEditing ? (
-                <input 
-                  type="number" 
-                  style={styles.input}
-                  min="0"
-                  value={displayData.professionalInfo.experienceYears}
-                  onChange={(e) => handleInputChange('professionalInfo', 'experienceYears', e.target.value)} 
-                />
-              ) : (
-                <div style={styles.displayValue}>{displayData.professionalInfo.experienceYears} years</div>
-              )}
-            </div>
-
-            <div className="mb-4">
-              <label className="form-label fw-semibold">Working Days *</label>
-              {isEditing ? (
-                <div className="row g-2">
-                  {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
-                    <div key={day} className="col-md-6">
-                      <div className="form-check">
-                        <input 
-                          className="form-check-input" 
-                          type="checkbox"
-                          id={`day-${day}`}
-                          checked={displayData.professionalInfo.workingDays.includes(day)}
-                          onChange={() => handleArrayToggle('professionalInfo', 'workingDays', day)} 
-                        />
-                        <label className="form-check-label" htmlFor={`day-${day}`}>
-                          {day}
-                        </label>
-                      </div>
+                  </div>
+                  <div className="form-field">
+                    <label>PAN Number</label>
+                    <div className="display-value masked">
+                      <i className="bi bi-shield-lock-fill"></i>
+                      XXXXX{displayData.personalInfo.panNumber.slice(-4)}
                     </div>
-                  ))}
+                  </div>
                 </div>
-              ) : (
-                <div>
-                  {displayData.professionalInfo.workingDays.map(day => (
-                    <span key={day} style={styles.tag}>{day}</span>
-                  ))}
+                <div className="info-alert">
+                  <i className="bi bi-info-circle-fill"></i>
+                  Identity documents cannot be changed. Contact support for updates.
                 </div>
-              )}
-            </div>
-
-            <div className="mb-4">
-              <label className="form-label fw-semibold">Languages *</label>
-              {isEditing ? (
-                <div className="row g-2">
-                  {['English', 'Hindi', 'Kannada', 'Tamil', 'Telugu', 'Malayalam'].map(lang => (
-                    <div key={lang} className="col-md-6">
-                      <div className="form-check">
-                        <input 
-                          className="form-check-input" 
-                          type="checkbox"
-                          id={`lang-${lang}`}
-                          checked={displayData.professionalInfo.languages.includes(lang)}
-                          onChange={() => handleArrayToggle('professionalInfo', 'languages', lang)} 
-                        />
-                        <label className="form-check-label" htmlFor={`lang-${lang}`}>
-                          {lang}
-                        </label>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div>
-                  {displayData.professionalInfo.languages.map(lang => (
-                    <span key={lang} style={styles.tag}>{lang}</span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Banking Tab */}
-        {activeTab === 'banking' && (
-          <div style={styles.card}>
-            <h2 className="h4 fw-bold mb-4" style={{ color: '#000000' }}>Banking Information</h2>
-            <div className="row g-3">
-              <div className="col-12">
-                <label className="form-label fw-semibold">Account Holder Name *</label>
-                {isEditing ? (
-                  <input 
-                    type="text" 
-                    style={styles.input}
-                    value={displayData.bankDetails.accountHolderName}
-                    onChange={(e) => handleInputChange('bankDetails', 'accountHolderName', e.target.value)} 
-                  />
-                ) : (
-                  <div style={styles.displayValue}>{displayData.bankDetails.accountHolderName}</div>
-                )}
               </div>
+            </div>
+          )}
 
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Account Number *</label>
+          {/* Address Tab */}
+          {activeTab === 'address' && (
+            <div className="content-card">
+              <h2>Address Information</h2>
+              <div className="form-grid">
+                <div className="form-field full">
+                  <label>Street Address *</label>
+                  {isEditing ? (
+                    <input type="text" className="input-field" value={displayData.addressInfo.street}
+                      onChange={(e) => handleInputChange('addressInfo', 'street', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.addressInfo.street}</div>
+                  )}
+                </div>
+
+                <div className="form-field">
+                  <label>Area *</label>
+                  {isEditing ? (
+                    <input type="text" className="input-field" value={displayData.addressInfo.area}
+                      onChange={(e) => handleInputChange('addressInfo', 'area', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.addressInfo.area}</div>
+                  )}
+                </div>
+
+                <div className="form-field">
+                  <label>Landmark</label>
+                  {isEditing ? (
+                    <input type="text" className="input-field" value={displayData.addressInfo.landmark}
+                      onChange={(e) => handleInputChange('addressInfo', 'landmark', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.addressInfo.landmark}</div>
+                  )}
+                </div>
+
+                <div className="form-field">
+                  <label>City *</label>
+                  {isEditing ? (
+                    <input type="text" className="input-field" value={displayData.addressInfo.city}
+                      onChange={(e) => handleInputChange('addressInfo', 'city', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.addressInfo.city}</div>
+                  )}
+                </div>
+
+                <div className="form-field">
+                  <label>State *</label>
+                  {isEditing ? (
+                    <input type="text" className="input-field" value={displayData.addressInfo.state}
+                      onChange={(e) => handleInputChange('addressInfo', 'state', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.addressInfo.state}</div>
+                  )}
+                </div>
+
+                <div className="form-field">
+                  <label>PIN Code *</label>
+                  {isEditing ? (
+                    <input type="text" className="input-field" maxLength="6" value={displayData.addressInfo.pincode}
+                      onChange={(e) => handleInputChange('addressInfo', 'pincode', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.addressInfo.pincode}</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Professional Tab */}
+          {activeTab === 'professional' && (
+            <div className="content-card">
+              <h2>Professional Information</h2>
+              
+              <div className="form-field full">
+                <label>Areas of Expertise *</label>
                 {isEditing ? (
-                  <input 
-                    type="text" 
-                    style={styles.input}
-                    value={displayData.bankDetails.accountNumber}
-                    onChange={(e) => handleInputChange('bankDetails', 'accountNumber', e.target.value)} 
-                  />
+                  <div className="checkbox-group">
+                    {['Home Cleaning', 'Deep Cleaning', 'Bathroom Cleaning', 'Kitchen Cleaning', 'AC Repair', 'Plumbing', 'Electrical', 'Painting'].map(skill => (
+                      <label key={skill} className="checkbox-item">
+                        <input type="checkbox" checked={displayData.professionalInfo.expertise.includes(skill)}
+                          onChange={() => handleArrayToggle('professionalInfo', 'expertise', skill)} />
+                        <span>{skill}</span>
+                      </label>
+                    ))}
+                  </div>
                 ) : (
-                  <div style={{...styles.displayValue, ...styles.maskedValue}}>
-                    <i className="bi bi-shield-lock-fill text-primary"></i>
-                    XXXXXXXXXXXX{displayData.bankDetails.accountNumber?.slice(-4)}
+                  <div className="tags">
+                    {displayData.professionalInfo.expertise.map(skill => (
+                      <span key={skill} className="tag">{skill}</span>
+                    ))}
                   </div>
                 )}
               </div>
 
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">IFSC Code *</label>
+              <div className="form-grid">
+                <div className="form-field">
+                  <label>Experience (Years) *</label>
+                  {isEditing ? (
+                    <input type="number" className="input-field" min="0" value={displayData.professionalInfo.experienceYears}
+                      onChange={(e) => handleInputChange('professionalInfo', 'experienceYears', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.professionalInfo.experienceYears} years</div>
+                  )}
+                </div>
+
+                <div className="form-field">
+                  <label>Vehicle Type</label>
+                  {isEditing ? (
+                    <select className="input-field" value={displayData.professionalInfo.vehicleType}
+                      onChange={(e) => handleInputChange('professionalInfo', 'vehicleType', e.target.value)}>
+                      <option>No Vehicle</option>
+                      <option>Bicycle</option>
+                      <option>Two Wheeler</option>
+                      <option>Four Wheeler</option>
+                    </select>
+                  ) : (
+                    <div className="display-value">{displayData.professionalInfo.vehicleType}</div>
+                  )}
+                </div>
+
+                <div className="form-field full">
+                  <label>Certifications</label>
+                  {isEditing ? (
+                    <input type="text" className="input-field" value={displayData.professionalInfo.certifications}
+                      onChange={(e) => handleInputChange('professionalInfo', 'certifications', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.professionalInfo.certifications}</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="form-field full">
+                <label>Working Days *</label>
                 {isEditing ? (
-                  <input 
-                    type="text" 
-                    style={styles.input}
-                    value={displayData.bankDetails.ifscCode}
-                    onChange={(e) => handleInputChange('bankDetails', 'ifscCode', e.target.value)} 
-                  />
+                  <div className="checkbox-group">
+                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
+                      <label key={day} className="checkbox-item">
+                        <input type="checkbox" checked={displayData.professionalInfo.workingDays.includes(day)}
+                          onChange={() => handleArrayToggle('professionalInfo', 'workingDays', day)} />
+                        <span>{day}</span>
+                      </label>
+                    ))}
+                  </div>
                 ) : (
-                  <div style={styles.displayValue}>{displayData.bankDetails.ifscCode}</div>
+                  <div className="tags">
+                    {displayData.professionalInfo.workingDays.map(day => (
+                      <span key={day} className="tag day-tag">{day}</span>
+                    ))}
+                  </div>
                 )}
               </div>
 
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Bank Name *</label>
-                {isEditing ? (
-                  <input 
-                    type="text" 
-                    style={styles.input}
-                    value={displayData.bankDetails.bankName}
-                    onChange={(e) => handleInputChange('bankDetails', 'bankName', e.target.value)} 
-                  />
-                ) : (
-                  <div style={styles.displayValue}>{displayData.bankDetails.bankName}</div>
-                )}
+              <div className="form-grid">
+                <div className="form-field">
+                  <label>Start Time *</label>
+                  {isEditing ? (
+                    <input type="time" className="input-field" value={displayData.professionalInfo.workingHoursStart}
+                      onChange={(e) => handleInputChange('professionalInfo', 'workingHoursStart', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.professionalInfo.workingHoursStart}</div>
+                  )}
+                </div>
+
+                <div className="form-field">
+                  <label>End Time *</label>
+                  {isEditing ? (
+                    <input type="time" className="input-field" value={displayData.professionalInfo.workingHoursEnd}
+                      onChange={(e) => handleInputChange('professionalInfo', 'workingHoursEnd', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.professionalInfo.workingHoursEnd}</div>
+                  )}
+                </div>
               </div>
 
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Branch Name *</label>
+              <div className="form-field full">
+                <label>Languages *</label>
                 {isEditing ? (
-                  <input 
-                    type="text" 
-                    style={styles.input}
-                    value={displayData.bankDetails.branchName}
-                    onChange={(e) => handleInputChange('bankDetails', 'branchName', e.target.value)} 
-                  />
+                  <div className="checkbox-group">
+                    {['English', 'Hindi', 'Kannada', 'Tamil', 'Telugu', 'Malayalam'].map(lang => (
+                      <label key={lang} className="checkbox-item">
+                        <input type="checkbox" checked={displayData.professionalInfo.languages.includes(lang)}
+                          onChange={() => handleArrayToggle('professionalInfo', 'languages', lang)} />
+                        <span>{lang}</span>
+                      </label>
+                    ))}
+                  </div>
                 ) : (
-                  <div style={styles.displayValue}>{displayData.bankDetails.branchName}</div>
-                )}
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">UPI ID</label>
-                {isEditing ? (
-                  <input 
-                    type="text" 
-                    style={styles.input}
-                    value={displayData.bankDetails.upiId}
-                    onChange={(e) => handleInputChange('bankDetails', 'upiId', e.target.value)} 
-                  />
-                ) : (
-                  <div style={styles.displayValue}>{displayData.bankDetails.upiId || 'Not provided'}</div>
+                  <div className="tags">
+                    {displayData.professionalInfo.languages.map(lang => (
+                      <span key={lang} className="tag">{lang}</span>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
-            <div style={{...styles.infoAlert, ...styles.successAlert}} className="mt-4">
-              <i className="bi bi-shield-check-fill"></i>
-              Your banking info is encrypted. Payments processed in 24-48 hours.
+          )}
+
+          {/* Banking Tab */}
+          {activeTab === 'banking' && (
+            <div className="content-card">
+              <h2>Banking Information</h2>
+              <div className="form-grid">
+                <div className="form-field full">
+                  <label>Account Holder Name *</label>
+                  {isEditing ? (
+                    <input type="text" className="input-field" value={displayData.bankDetails.accountHolderName}
+                      onChange={(e) => handleInputChange('bankDetails', 'accountHolderName', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.bankDetails.accountHolderName}</div>
+                  )}
+                </div>
+
+                <div className="form-field">
+                  <label>Account Number *</label>
+                  {isEditing ? (
+                    <input type="text" className="input-field" value={displayData.bankDetails.accountNumber}
+                      onChange={(e) => handleInputChange('bankDetails', 'accountNumber', e.target.value)} />
+                  ) : (
+                    <div className="display-value masked">
+                      <i className="bi bi-shield-lock-fill"></i>
+                      XXXXXXXXXXXX{displayData.bankDetails.accountNumber.slice(-4)}
+                    </div>
+                  )}
+                </div>
+
+                <div className="form-field">
+                  <label>IFSC Code *</label>
+                  {isEditing ? (
+                    <input type="text" className="input-field" value={displayData.bankDetails.ifscCode}
+                      onChange={(e) => handleInputChange('bankDetails', 'ifscCode', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.bankDetails.ifscCode}</div>
+                  )}
+                </div>
+
+                <div className="form-field">
+                  <label>Bank Name *</label>
+                  {isEditing ? (
+                    <input type="text" className="input-field" value={displayData.bankDetails.bankName}
+                      onChange={(e) => handleInputChange('bankDetails', 'bankName', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.bankDetails.bankName}</div>
+                  )}
+                </div>
+
+                <div className="form-field">
+                  <label>Branch Name *</label>
+                  {isEditing ? (
+                    <input type="text" className="input-field" value={displayData.bankDetails.branchName}
+                      onChange={(e) => handleInputChange('bankDetails', 'branchName', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.bankDetails.branchName}</div>
+                  )}
+                </div>
+
+                <div className="form-field">
+                  <label>UPI ID</label>
+                  {isEditing ? (
+                    <input type="text" className="input-field" value={displayData.bankDetails.upiId}
+                      onChange={(e) => handleInputChange('bankDetails', 'upiId', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.bankDetails.upiId}</div>
+                  )}
+                </div>
+              </div>
+              <div className="info-alert success">
+                <i className="bi bi-shield-check-fill"></i>
+                Your banking info is encrypted. Payments processed in 24-48 hours.
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Pricing Tab */}
+          {activeTab === 'pricing' && (
+            <div className="content-card">
+              <h2>Service Pricing</h2>
+              <div className="form-grid">
+                <div className="form-field">
+                  <label>Base Rate (per hour) *</label>
+                  {isEditing ? (
+                    <div className="input-with-icon">
+                      <span className="input-icon">₹</span>
+                      <input type="number" className="input-field with-icon" min="0" value={displayData.pricingInfo.baseRate}
+                        onChange={(e) => handleInputChange('pricingInfo', 'baseRate', e.target.value)} />
+                    </div>
+                  ) : (
+                    <div className="display-value">₹{displayData.pricingInfo.baseRate}</div>
+                  )}
+                </div>
+
+                <div className="form-field">
+                  <label>Max Travel Distance (km) *</label>
+                  {isEditing ? (
+                    <input type="number" className="input-field" min="0" value={displayData.pricingInfo.maxTravelDistance}
+                      onChange={(e) => handleInputChange('pricingInfo', 'maxTravelDistance', e.target.value)} />
+                  ) : (
+                    <div className="display-value">{displayData.pricingInfo.maxTravelDistance} km</div>
+                  )}
+                </div>
+              </div>
+              <div className="info-alert">
+                <i className="bi bi-lightbulb-fill"></i>
+                Your base rate can be adjusted based on service complexity and customer location.
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Success Modal */}
       {showSuccessModal && (
-        <div 
-          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-          style={{ 
-            background: 'rgba(0,0,0,0.5)', 
-            zIndex: 9999 
-          }}
-        >
-          <div 
-            className="bg-white rounded-4 p-5 text-center"
-            style={{ maxWidth: '400px' }}
-          >
-            <div 
-              className="rounded-circle bg-success d-inline-flex align-items-center justify-content-center mb-3"
-              style={{ width: '80px', height: '80px' }}
-            >
-              <i className="bi bi-check-circle-fill text-white" style={{ fontSize: '3rem' }}></i>
+        <div className="modal-backdrop">
+          <div className="success-modal">
+            <div className="success-icon">
+              <i className="bi bi-check-circle-fill"></i>
             </div>
-            <h3 className="fw-bold mb-2">Profile Updated!</h3>
-            <p className="text-muted">Your changes have been saved successfully.</p>
+            <h3>Profile Updated!</h3>
+            <p>Your changes have been saved successfully.</p>
           </div>
         </div>
       )}

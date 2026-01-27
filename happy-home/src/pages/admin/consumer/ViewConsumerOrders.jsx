@@ -8,20 +8,20 @@ const ViewConsumerOrders = ({ consumers, onViewDetails, onViewOrders }) => (
       <h2 className="h5 mb-0">All Consumers</h2>
     </div>
     <div className="card-body">
-      {consumers.map((consumer) => (
-        <div key={consumer.id} className={styles.listItem}>
+      {consumers.map((consumer,id) => (
+        <div key={id} className={styles.listItem}>
           <div className="card-body d-flex justify-content-between align-items-center">
             <div className="d-flex align-items-center gap-3">
               <div
                 className={styles.avatar}
                 style={{ width: 48, height: 48 }}
               >
-                {utils.getInitial(consumer.name)}
+                {utils.getInitial(consumer.firstName)}
               </div>
               <div>
-                <h3 className="h6 fw-bold mb-1">{consumer.name}</h3>
+                <h3 className="h6 fw-bold mb-1">{consumer.firstName}</h3>
                 <p className="mb-0 text-muted small">
-                  ✉️ {consumer.email} &nbsp; | &nbsp; 📍 {consumer.city}
+                  ✉️ {consumer.email} &nbsp; | &nbsp; 📍 {consumer.address.city}
                 </p>
               </div>
             </div>

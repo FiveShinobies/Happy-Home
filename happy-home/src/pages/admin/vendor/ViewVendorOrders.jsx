@@ -8,8 +8,8 @@ const ViewVendorOrders = ({ vendors, onViewDetails, onViewOrders }) => (
       <h2 className="h5 mb-0">All Vendors</h2>
     </div>
     <div className="card-body">
-      {vendors.map((vendor) => (
-        <div key={vendor.id} className={styles.listItem}>
+      {vendors.map((vendor,id) => (
+        <div key={id} className={styles.listItem}>
           <div className="card-body d-flex justify-content-between align-items-center">
             <div className="d-flex align-items-center gap-3">
               <div

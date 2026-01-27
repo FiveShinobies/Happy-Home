@@ -27,10 +27,10 @@ const ConsumerOrders = ({ consumer, orders, onBack, onViewOrderDetails }) => (
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => (
-              <tr key={order.id} className={styles.tableRow}>
-                <td className="fw-semibold">{order.orderNumber}</td>
-                <td>{order.date}</td>
+            {orders.map((order,id) => (
+              <tr key={id} className={styles.tableRow}>
+                <td className="fw-semibold">{order.orderId}</td>
+                <td>{order.orderDate}</td>
                 <td>{order.items} items</td>
                 <td className="fw-bold text-primary">{order.total}</td>
                 <td>

@@ -10,6 +10,7 @@ const ConsumerNavbar = () => {
     { path: '/consumer-home', label: 'Home', icon: Home },
     { path: '/consumer-home/service-listing', label: 'Services', icon: Package },
     { path: '/consumer-home/orders', label: 'Orders', icon: ShoppingBag },
+    { path: '/consumer-home/cart', label: 'Cart', icon: ShoppingCart },
     { path: '/consumer-home/about-us', label: 'About Us', icon: Info },
     { path: '/consumer-home/contact-us', label: 'Contact', icon: Phone },
     { path: '/consumer-home/consumer-profile', label: 'Profile', icon: User },

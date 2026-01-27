@@ -1,301 +1,293 @@
-import React, { useState, useEffect } from "react";
+// /vendor-home/completed-order-details
+
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  Home,
+  Droplet,
+  Zap,
+  Paintbrush,
+  Wrench,
+  User,
   Calendar,
-  Package,
+  MapPin,
   DollarSign,
+  Star,
   ChevronRight,
-  Filter,
-  CheckCircle,
-  Clock,
-  XCircle,
-  AlertCircle
 } from "lucide-react";
-import "bootstrap/dist/css/bootstrap.min.css";
-import axios from "axios";
 
 export default function OrderHistory() {
   const navigate = useNavigate();
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState("ALL");
 
-  const vendorId = 1; // Replace with actual logged-in vendor ID
-
-  // Fetch orders from backend
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const response = await axios.get(`http://localhost:8080/admin/vendors/${vendorId}/orders`);
-        console.log('Fetched orders:', response.data);
-        setOrders(response.data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching orders:', error);
-        setLoading(false);
-      }
-    };
-
-    fetchOrders();
-  }, [vendorId]);
-
-  // Format date
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    });
+  // ICON MAP
+  const icons = {
+    Cleaning: Home,
+    Plumbing: Droplet,
+    Electrical: Zap,
+    Painting: Paintbrush,
+    "AC Repair": Wrench,
   };
 
-  // Format time
-  const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: true 
-    });
+  // FAKE ORDERS LIST
+  const ordersData = [
+    {
+      id: "SRV-001",
+      serviceName: "Deep Home Cleaning",
+      category: "Cleaning",
+      providerName: "SparkClean Services",
+      providerRating: 4.8,
+      serviceDate: "2024-12-01",
+      timeSlot: "10:00 AM - 2:00 PM",
+      status: "Completed",
+      amount: 1250,
+      address: "123 Main Street, Apt 4B",
+      paymentStatus: "Paid",
+    },
+    {
+      id: "SRV-002",
+      serviceName: "Kitchen Plumbing Repair",
+      category: "Plumbing",
+      providerName: "QuickFix Plumbers",
+      providerRating: 4.6,
+      serviceDate: "2024-12-05",
+      timeSlot: "2:00 PM - 4:00 PM",
+      status: "Scheduled",
+      amount: 2180,
+      address: "123 Main Street, Apt 4B",
+      paymentStatus: "Pending",
+    },
+    {
+      id: "SRV-003",
+      serviceName: "Electrical Wiring Inspection",
+      category: "Electrical",
+      providerName: "PowerPro Electricians",
+      providerRating: 4.9,
+      serviceDate: "2024-12-03",
+      timeSlot: "9:00 AM - 11:00 AM",
+      status: "In Progress",
+      amount: 1200,
+      address: "123 Main Street, Apt 4B",
+      paymentStatus: "Paid",
+    },
+  ];
+
+  // FILTER STATES
+  const [filterCat, setFilterCat] = useState("All");
+
+  // SORTING LOGIC
+const filtered = ordersData.filter(order => order.status === "Completed");
+
+  // STATUS COLORS
+  const statusColor = {
+    Completed: { bg: "#E6F4EA", color: "#2E7D32" },
+    Scheduled: { bg: "#E3F2FD", color: "#1565C0" },
+    "In Progress": { bg: "#FFF8E1", color: "#F57C00" },
+    Cancelled: { bg: "#FFEBEE", color: "#C62828" },
   };
-
-  // Get status color
-  const getStatusColor = (status) => {
-    const statusColors = {
-      'ASSIGNED': { bg: '#e3f2fd', text: '#1976d2', icon: Clock },
-      'COMPLETED': { bg: '#e8f5e9', text: '#388e3c', icon: CheckCircle },
-      'CANCELLED': { bg: '#ffebee', text: '#d32f2f', icon: XCircle },
-      'IN_PROGRESS': { bg: '#fff3e0', text: '#f57c00', icon: AlertCircle },
-      'PENDING': { bg: '#f3e5f5', text: '#7b1fa2', icon: Clock }
-    };
-    return statusColors[status] || { bg: '#f5f5f5', text: '#757575', icon: Package };
-  };
-
-  // Filter orders
-  const filteredOrders = filterStatus === "ALL" 
-    ? orders 
-    : orders.filter(order => order.status === filterStatus);
-
-  const styles = {
-    pageBackground: {
-      minHeight: '100vh',
-      background: '#ffffff',
-      padding: '2rem'
-    },
-    header: {
-      marginBottom: '2rem'
-    },
-    filterBtn: {
-      padding: '0.5rem 1.5rem',
-      borderRadius: '2rem',
-      border: '2px solid #e0e0e0',
-      background: '#ffffff',
-      color: '#000000',
-      cursor: 'pointer',
-      fontSize: '0.875rem',
-      fontWeight: '500',
-      transition: 'all 0.2s ease'
-    },
-    filterBtnActive: {
-      background: '#1e40af',
-      color: '#ffffff',
-      border: '2px solid #1e40af'
-    },
-    orderCard: {
-      borderRadius: '1rem',
-      border: '1px solid #e0e0e0',
-      background: '#ffffff',
-      padding: '1.5rem',
-      marginBottom: '1rem',
-      transition: 'all 0.2s ease'
-    },
-    iconCircle: {
-      width: '48px',
-      height: '48px',
-      borderRadius: '50%',
-      background: '#f0f7ff',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    },
-    statusBadge: {
-      padding: '0.375rem 0.75rem',
-      borderRadius: '1rem',
-      fontSize: '0.75rem',
-      fontWeight: '600',
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '0.25rem'
-    },
-    detailsBtn: {
-      background: '#1e40af',
-      color: '#ffffff',
-      padding: '0.5rem 1rem',
-      borderRadius: '0.5rem',
-      border: 'none',
-      fontWeight: '600',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.5rem',
-      cursor: 'pointer',
-      transition: 'background 0.2s ease'
-    }
-  };
-
-  if (loading) {
-    return (
-      <div style={styles.pageBackground}>
-        <div className="container text-center py-5">
-          <div className="spinner-border" style={{ color: '#1e40af' }} role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
-          <p className="mt-3 text-muted">Loading orders...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div style={styles.pageBackground}>
-      <div className="container">
-        {/* Header */}
-        <div style={styles.header}>
-          <h1 className="display-6 fw-bold mb-2" style={{ color: '#000000' }}>
-            Order History
-          </h1>
-          <p className="text-muted">View and manage all your completed orders</p>
-        </div>
+    <div style={{ padding: "32px", background: "#f6f7f9", minHeight: "100vh" }}>
+      <h2 style={{ fontSize: "24px", fontWeight: 700, marginBottom: "20px" }}>
+        Service History
+      </h2>
 
-        {/* Filter Buttons */}
-        <div className="d-flex flex-wrap gap-2 mb-4">
-          {['ALL', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'].map((status) => (
-            <button
-              key={status}
-              style={{
-                ...styles.filterBtn,
-                ...(filterStatus === status ? styles.filterBtnActive : {})
-              }}
-              onClick={() => setFilterStatus(status)}
-              onMouseOver={(e) => {
-                if (filterStatus !== status) {
-                  e.target.style.borderColor = '#1e40af';
-                }
-              }}
-              onMouseOut={(e) => {
-                if (filterStatus !== status) {
-                  e.target.style.borderColor = '#e0e0e0';
-                }
-              }}
-            >
-              {status.replace('_', ' ')}
-            </button>
-          ))}
-        </div>
+      {/* FILTERS */}
+      <div style={{ display: "flex", gap: "12px", marginBottom: "20px" }}>
+        <select
+          value={filterCat}
+          onChange={(e) => setFilterCat(e.target.value)}
+          style={selectStyle}
+        >
+          <option value="All">All Categories</option>
+          <option value="Cleaning">Cleaning</option>
+          <option value="Plumbing">Plumbing</option>
+          <option value="Electrical">Electrical</option>
+          <option value="Painting">Painting</option>
+          <option value="AC Repair">AC Repair</option>
+        </select>
 
-        {/* Orders List */}
-        {filteredOrders.length === 0 ? (
-          <div className="text-center py-5">
-            <Package size={64} style={{ color: '#e0e0e0' }} />
-            <h3 className="mt-3" style={{ color: '#000000' }}>No orders found</h3>
-            <p className="text-muted">
-              {filterStatus === 'ALL' 
-                ? "You don't have any orders yet" 
-                : `No ${filterStatus.toLowerCase()} orders found`}
-            </p>
-          </div>
-        ) : (
-          <div className="row">
-            {filteredOrders.map((order) => {
-              const statusStyle = getStatusColor(order.status);
-              const StatusIcon = statusStyle.icon;
+       
+      </div>
 
-              return (
-                <div key={order.orderId} className="col-12">
-                  <div 
-                    style={styles.orderCard}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.boxShadow = 'none';
-                      e.currentTarget.style.transform = 'translateY(0)';
-                    }}
-                  >
-                    <div className="row align-items-center">
-                      {/* Order Icon & ID */}
-                      <div className="col-md-4">
-                        <div className="d-flex align-items-center gap-3">
-                          <div style={styles.iconCircle}>
-                            <Package size={24} style={{ color: '#1e40af' }} />
-                          </div>
-                          <div>
-                            <h5 className="mb-1 fw-bold" style={{ color: '#000000' }}>
-                              Order #{order.orderId}
-                            </h5>
-                            <span 
-                              style={{
-                                ...styles.statusBadge,
-                                background: statusStyle.bg,
-                                color: statusStyle.text
-                              }}
-                            >
-                              <StatusIcon size={12} />
-                              {order.status}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+      {/* LIST OF ORDERS */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+        {filtered.map((order) => {
+          const Icon = icons[order.category];
 
-                      {/* Date & Time */}
-                      <div className="col-md-3">
-                        <div className="d-flex align-items-center gap-2 mb-1">
-                          <Calendar size={16} style={{ color: '#1e40af' }} />
-                          <span className="small fw-semibold" style={{ color: '#000000' }}>
-                            {formatDate(order.orderDate)}
-                          </span>
-                        </div>
-                        <div className="d-flex align-items-center gap-2">
-                          <Clock size={16} style={{ color: '#666' }} />
-                          <span className="small text-muted">
-                            {formatTime(order.orderDate)}
-                          </span>
-                        </div>
-                      </div>
+          return (
+            <div key={order.id} style={card}>
+              {/* Top row */}
+              <div style={row}>
+                <div style={iconRow}>
+                  <div style={iconBox}>
+                    <Icon size={26} color="#1976D2" />
+                  </div>
 
-                      {/* Amount */}
-                      <div className="col-md-3">
-                        <div className="d-flex align-items-center gap-2">
-                          <DollarSign size={16} style={{ color: '#1e40af' }} />
-                          <div>
-                            <div className="small text-muted">Total Amount</div>
-                            <div className="h5 fw-bold mb-0" style={{ color: '#1e40af' }}>
-                              ₹{order.total.toLocaleString()}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                  <div>
+                    <div style={serviceTitle}>{order.serviceName}</div>
+                    <div style={serviceId}>{order.id}</div>
+                  </div>
+                </div>
 
-                      {/* Details Button */}
-                      <div className="col-md-2 text-end">
-                        <button
-                          style={styles.detailsBtn}
-                          onClick={() => navigate(`/vendor-home/completed-order-details/${order.orderId}`)}
-                          onMouseOver={(e) => e.target.style.background = '#1e3a8a'}
-                          onMouseOut={(e) => e.target.style.background = '#1e40af'}
-                        >
-                          Details
-                          <ChevronRight size={16} />
-                        </button>
-                      </div>
+                {/* STATUS PILL */}
+                <div
+                  style={{
+                    ...statusPill,
+                    background: statusColor[order.status].bg,
+                    color: statusColor[order.status].color,
+                  }}
+                >
+                  {order.status}
+                </div>
+              </div>
+
+              {/* GRID INFO */}
+              <div style={grid4}>
+                {/* Provider */}
+                <div style={infoRow}>
+                  <User size={16} color="#666" />
+                  <div>
+                    <strong style={{ fontSize: "14px" }}>
+                      {order.providerName}
+                    </strong>
+                    <div style={ratingRow}>
+                      <Star size={12} fill="#FFC107" color="#FFC107" />
+                      <span style={ratingText}>{order.providerRating}</span>
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+
+                {/* Date */}
+                <div style={infoRow}>
+                  <Calendar size={16} color="#666" />
+                  <div>
+                    <strong>{order.serviceDate}</strong>
+                    <div style={subText}>{order.timeSlot}</div>
+                  </div>
+                </div>
+
+                {/* Address */}
+                <div style={infoRow}>
+                  <MapPin size={16} color="#666" />
+                  <span style={{ fontSize: "14px" }}>{order.address}</span>
+                </div>
+
+                {/* Amount */}
+                <div style={infoRow}>
+                  <DollarSign size={16} color="#666" />
+                  <strong style={{ fontSize: "15px" }}>₹{order.amount}</strong>
+                </div>
+              </div>
+
+              {/* Payment Row */}
+              <div>
+                <span
+                  style={{
+                    color: order.paymentStatus === "Paid" ? "#2E7D32" : "#E65100",
+                    fontWeight: 600,
+                    fontSize: "14px",
+                  }}
+                >
+                  Payment: {order.paymentStatus}
+                </span>
+              </div>
+
+              {/* DETAILS BUTTON */}
+              <div style={{ textAlign: "right" }}>
+                <button
+                  style={detailsButton}
+                  onClick={() => navigate(`/vendor-home/completed-order-details/${order.id}`)}
+                >
+                  Details <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
+
+// ---------- STYLES EXACT MATCH ----------
+
+const card = {
+  background: "#ffffff",
+  borderRadius: "14px",
+  padding: "22px",
+  boxShadow: "0px 4px 14px rgba(0,0,0,0.08)",
+  border: "1px solid #eee",
+  display: "flex",
+  flexDirection: "column",
+  gap: "14px",
+};
+
+const row = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+};
+
+const iconRow = {
+  display: "flex",
+  gap: "12px",
+  alignItems: "center",
+};
+
+const iconBox = {
+  width: "48px",
+  height: "48px",
+  borderRadius: "12px",
+  background: "#E3F2FD",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+};
+
+const serviceTitle = { fontSize: "18px", fontWeight: 600 };
+const serviceId = { color: "#777", fontSize: "13px" };
+
+const statusPill = {
+  padding: "6px 14px",
+  borderRadius: "30px",
+  fontSize: "14px",
+  fontWeight: 600,
+};
+
+const grid4 = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+  gap: "10px",
+};
+
+const infoRow = {
+  display: "flex",
+  gap: "8px",
+  alignItems: "flex-start",
+};
+
+const ratingRow = { display: "flex", gap: 4, alignItems: "center" };
+
+const ratingText = { fontSize: "12px", color: "#555" };
+const subText = { fontSize: "12px", color: "#777" };
+
+const detailsButton = {
+  background: "#0B75F5",
+  color: "white",
+  padding: "10px 20px",
+  borderRadius: "10px",
+  border: "none",
+  fontWeight: 600,
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+  cursor: "pointer",
+};
+
+const selectStyle = {
+  padding: "10px 14px",
+  borderRadius: "10px",
+  border: "1px solid #ccc",
+  fontSize: "14px",
+  background: "#fff",
+};
