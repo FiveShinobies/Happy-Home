@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { toast } from 'react-toastify';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { toast } from "react-toastify";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 
 dayjs.extend(relativeTime);
 
@@ -20,27 +20,29 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
 
   // Debug modal states
   useEffect(() => {
-    console.log('Modal States:', { showStartConfirm, showCompleteConfirm });
+    console.log("Modal States:", { showStartConfirm, showCompleteConfirm });
   }, [showStartConfirm, showCompleteConfirm]);
 
   useEffect(() => {
     let finalVendorId = null;
 
     // ⭐ HARDCODED VENDOR ID - Change this to get from localStorage later
-    const HARDCODED_VENDOR_ID = JSON.parse(sessionStorage.getItem('user')).userId;
+    const HARDCODED_VENDOR_ID = JSON.parse(
+      sessionStorage.getItem("user"),
+    ).userId;
 
     if (propVendorId) {
-      console.log('✅ Using vendorId from props:', propVendorId);
+      console.log("✅ Using vendorId from props:", propVendorId);
       finalVendorId = propVendorId;
     } else if (HARDCODED_VENDOR_ID) {
-      console.log('⭐ Using HARDCODED vendorId:', HARDCODED_VENDOR_ID);
+      console.log("⭐ Using HARDCODED vendorId:", HARDCODED_VENDOR_ID);
       finalVendorId = HARDCODED_VENDOR_ID;
     }
 
     setVendorId(finalVendorId);
 
     if (!finalVendorId) {
-      setError('Vendor ID not found. Please check console for debug info.');
+      setError("Vendor ID not found. Please check console for debug info.");
       setLoading(false);
       return;
     }
@@ -53,21 +55,28 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
       setLoading(true);
       setError(null);
 
-      console.log('📡 Fetching orders from:', `http://localhost:8080/admin/vendors/${id}/orders`);
+      console.log(
+        "📡 Fetching orders from:",
+        `http://localhost:8080/admin/vendors/${id}/orders`,
+      );
 
-      const response = await axios.get(`http://localhost:8080/admin/vendors/${id}/orders`);
-      
-      console.log('📦 API Response:', response.data);
+      const response = await axios.get(
+        `http://localhost:8080/admin/vendors/${id}/orders`,
+      );
 
-      const assignedOrders = response.data.filter(order => order.status === 'ASSIGNED');
-      console.log('✅ Assigned orders:', assignedOrders);
-      
+      console.log("📦 API Response:", response.data);
+
+      const assignedOrders = response.data.filter(
+        (order) => order.status === "ASSIGNED" || order.status === "INPROGRESS",
+      );
+      console.log("✅ Assigned orders:", assignedOrders);
+
       setOrders(assignedOrders);
       setLoading(false);
     } catch (error) {
-      console.error('❌ Error fetching vendor orders:', error);
-      setError(error.response?.data?.message || 'Failed to load orders');
-      toast.error('Failed to load orders');
+      console.error("❌ Error fetching vendor orders:", error);
+      setError(error.response?.data?.message || "Failed to load orders");
+      toast.error("Failed to load orders");
       setLoading(false);
     }
   };
@@ -75,35 +84,39 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
   const fetchOrderDetails = async (orderId) => {
     try {
       setDetailLoading(true);
-      console.log('📡 Fetching order details for ID:', orderId);
-      
-      const response = await axios.get(`http://localhost:8080/vendor/details/${orderId}`);
-      
-      console.log('📦 Order Details Response:', response.data);
-      
+      console.log("📡 Fetching order details for ID:", orderId);
+
+      const response = await axios.get(
+        `http://localhost:8080/vendor/details/${orderId}`,
+      );
+
+      console.log("📦 Order Details Response:", response.data);
+
       // Map the API response to match our component's expected structure
       const mappedOrder = {
         orderId: orderId,
         price: response.data.price,
         timeSlot: response.data.timeSlot,
-        priority: response.data.priority || 'NORMAL',
+        priority: response.data.priority || "NORMAL",
         service: response.data.service,
         address: response.data.address,
         myVendor: response.data.myVendor,
-        status: 'ASSIGNED'
+        status: response.data.status,
       };
-      
-      console.log('✅ Mapped Order Data:', mappedOrder);
+
+      console.log("✅ Mapped Order Data:", mappedOrder);
       setSelectedOrder(mappedOrder);
       setDetailLoading(false);
     } catch (error) {
-      console.error('❌ Error fetching order details:', error);
-      
+      console.error("❌ Error fetching order details:", error);
+
       // Fallback to basic order data
-      const basicOrder = orders.find(o => o.orderId === orderId);
+      const basicOrder = orders.find((o) => o.orderId === orderId);
       if (basicOrder) {
-        console.log('ℹ️ Using basic order data from list');
-        toast.warning('Could not load full details. Showing basic information.');
+        console.log("ℹ️ Using basic order data from list");
+        toast.warning(
+          "Could not load full details. Showing basic information.",
+        );
         setSelectedOrder({
           orderId: basicOrder.orderId,
           orderDate: basicOrder.orderDate,
@@ -111,73 +124,86 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
           status: basicOrder.status,
           price: basicOrder.total,
           timeSlot: basicOrder.orderDate,
-          priority: 'NORMAL',
+          priority: "NORMAL",
           service: {
-            serviceName: 'Service',
-            category: 'General',
-            shortDesc: 'Service details will be available soon'
+            serviceName: "Service",
+            category: "General",
+            shortDesc: "Service details will be available soon",
           },
           address: {
-            homeNo: 'N/A',
-            town: 'N/A',
-            city: 'N/A',
-            state: 'N/A',
-            pincode: 'N/A'
-          }
+            homeNo: "N/A",
+            town: "N/A",
+            city: "N/A",
+            state: "N/A",
+            pincode: "N/A",
+          },
         });
       } else {
-        toast.error('Failed to load order details');
+        toast.error("Failed to load order details");
       }
       setDetailLoading(false);
     }
   };
 
   const handleViewDetails = (order) => {
-    console.log('👆 View Details clicked for order:', order.orderId);
+    console.log("👆 View Details clicked for order:", order.orderId);
     fetchOrderDetails(order.orderId);
   };
 
   const handleStartService = async () => {
     try {
       const oid = selectedOrder.orderId;
-      console.log('🚀 Starting service for order:', oid);
-      console.log('📡 API URL:', `http://localhost:8080/order/in-progress/${oid}`);
-      
+      console.log("🚀 Starting service for order:", oid);
+      console.log(
+        "📡 API URL:",
+        `http://localhost:8080/order/in-progress/${oid}`,
+      );
+
       // PATCH /order/in-progress/{oid}
-      const response = await axios.patch(`http://localhost:8080/order/in-progress/${oid}`);
-      
-      console.log('✅ Service started successfully:', response.data);
+      const response = await axios.patch(
+        `http://localhost:8080/order/in-progress/${oid}`,
+      );
+
+      console.log("✅ Service started successfully:", response.data);
       setShowStartConfirm(false);
-      toast.success('Service started successfully!');
+      toast.success("Service started successfully!");
       setSelectedOrder(null);
       fetchVendorOrders(vendorId);
     } catch (error) {
-      console.error('❌ Error starting service:', error);
-      console.error('Error details:', error.response?.data);
-      console.error('Error status:', error.response?.status);
-      toast.error(error.response?.data?.message || 'Failed to start service');
+      console.error("❌ Error starting service:", error);
+      console.error("Error details:", error.response?.data);
+      console.error("Error status:", error.response?.status);
+      toast.error(error.response?.data?.message || "Failed to start service");
     }
   };
 
   const handleCompleteService = async () => {
+    console.log("✅ Confirmed complete service for order:", selectedOrder.orderId);
     try {
       const oid = selectedOrder.orderId;
-      console.log('✅ Completing service for order:', oid);
-      console.log('📡 API URL:', `http://localhost:8080/order/completed/${oid}`);
-      
+      console.log("✅ Completing service for order:", oid);
+      console.log(
+        "📡 API URL:",
+        `http://localhost:8080/order/completed/${oid}`,
+      );
+
       // PATCH /order/completed/{oid}
-      const response = await axios.patch(`http://localhost:8080/order/completed/${oid}`);
-      
-      console.log('✅ Service completed successfully:', response.data);
+      const response = await axios.patch(
+        `http://localhost:8080/order/completed/${oid}`,
+      );
+
+      console.log("✅ Service completed successfully:", response.data);
       setShowCompleteConfirm(false);
-      toast.success('Service completed successfully!');
+      toast.success("Service completed successfully!");
       setSelectedOrder(null);
       fetchVendorOrders(vendorId);
     } catch (error) {
-      console.error('❌ Error completing service:', error);
-      console.error('Error details:', error.response?.data);
-      console.error('Error status:', error.response?.status);
-      toast.error(error.response?.data?.message || 'Failed to complete service');
+      console.error("❌ Error completing service:", error);
+      console.error("Error details:", error.response?.data);
+      console.error("Error status:", error.response?.status);
+      toast.error(
+        error.response?.data?.message || "Failed to complete service",
+      );
     }
   };
 
@@ -186,14 +212,14 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
     const gst = baseAmount * 0.18;
     const platformCommission = baseAmount * 0.1;
     const vendorEarnings = baseAmount - platformCommission;
-    
+
     return {
       baseAmount: baseAmount.toFixed(2),
       gst: gst.toFixed(2),
       platformCommission: platformCommission.toFixed(2),
       vendorEarnings: vendorEarnings.toFixed(2),
       totalWithGst: (baseAmount + gst).toFixed(2),
-      commissionPercentage: 10
+      commissionPercentage: 10,
     };
   };
 
@@ -215,7 +241,10 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
           <i className="bi bi-exclamation-triangle"></i>
           <h3>Error Loading Orders</h3>
           <p>{error}</p>
-          <button className="btn-retry" onClick={() => fetchVendorOrders(vendorId)}>
+          <button
+            className="btn-retry"
+            onClick={() => fetchVendorOrders(vendorId)}
+          >
             <i className="bi bi-arrow-clockwise"></i> Retry
           </button>
         </div>
@@ -260,9 +289,11 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
           <div className="header-content">
             <div>
               <h1>Order Details</h1>
-              <p className="order-id-text">Order ID: #{selectedOrder.orderId}</p>
+              <p className="order-id-text">
+                Order ID: #{selectedOrder.orderId}
+              </p>
             </div>
-            <span className="status-badge-large">ASSIGNED</span>
+            <span className="status-badge-large">{selectedOrder.status}</span>
           </div>
         </div>
 
@@ -278,7 +309,9 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
                 </div>
                 <div className="earnings-info">
                   <h3>Your Earnings</h3>
-                  <div className="earnings-amount">₹{payment.vendorEarnings}</div>
+                  <div className="earnings-amount">
+                    ₹{payment.vendorEarnings}
+                  </div>
                   <p>After {payment.commissionPercentage}% platform fee</p>
                 </div>
                 <div className="paid-badge">
@@ -293,32 +326,42 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
                   <h3>Service Details</h3>
                 </div>
                 <div className="card-body">
-                  <h4 className="service-title">{selectedOrder.service?.serviceName || 'Service'}</h4>
-                  <span className="service-badge">{selectedOrder.service?.category || 'General'}</span>
+                  <h4 className="service-title">
+                    {selectedOrder.service?.serviceName || "Service"}
+                  </h4>
+                  <span className="service-badge">
+                    {selectedOrder.service?.category || "General"}
+                  </span>
                   <p className="service-desc">
-                    {selectedOrder.service?.longDesc || selectedOrder.service?.shortDesc || 'Service will be provided as per booking'}
+                    {selectedOrder.service?.longDesc ||
+                      selectedOrder.service?.shortDesc ||
+                      "Service will be provided as per booking"}
                   </p>
-                  
+
                   <div className="detail-grid">
                     <div className="detail-item">
                       <i className="bi bi-calendar-check"></i>
                       <div>
                         <label>Service Date</label>
-                        <p>{dayjs(selectedOrder.timeSlot).format('MMMM DD, YYYY')}</p>
+                        <p>
+                          {dayjs(selectedOrder.timeSlot).format(
+                            "MMMM DD, YYYY",
+                          )}
+                        </p>
                       </div>
                     </div>
                     <div className="detail-item">
                       <i className="bi bi-clock"></i>
                       <div>
                         <label>Time</label>
-                        <p>{dayjs(selectedOrder.timeSlot).format('hh:mm A')}</p>
+                        <p>{dayjs(selectedOrder.timeSlot).format("hh:mm A")}</p>
                       </div>
                     </div>
                     <div className="detail-item">
                       <i className="bi bi-tag"></i>
                       <div>
                         <label>Priority</label>
-                        <p>{selectedOrder.priority || 'NORMAL'}</p>
+                        <p>{selectedOrder.priority || "NORMAL"}</p>
                       </div>
                     </div>
                   </div>
@@ -357,21 +400,33 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
                     Service Address
                   </div>
                   <div className="address-details">
-                    {selectedOrder.address?.homeNo && selectedOrder.address.homeNo !== 'N/A' && (
-                      <p><strong>{selectedOrder.address.homeNo}</strong></p>
-                    )}
-                    {selectedOrder.address?.town && selectedOrder.address.town !== 'N/A' && (
-                      <p>{selectedOrder.address.town}</p>
-                    )}
-                    {selectedOrder.address?.city && selectedOrder.address.city !== 'N/A' && (
-                      <p>
-                        {selectedOrder.address.city}
-                        {selectedOrder.address.state && selectedOrder.address.state !== 'N/A' && `, ${selectedOrder.address.state}`}
-                        {selectedOrder.address.pincode && selectedOrder.address.pincode !== 'N/A' && ` - ${selectedOrder.address.pincode}`}
+                    {selectedOrder.address?.homeNo &&
+                      selectedOrder.address.homeNo !== "N/A" && (
+                        <p>
+                          <strong>{selectedOrder.address.homeNo}</strong>
+                        </p>
+                      )}
+                    {selectedOrder.address?.town &&
+                      selectedOrder.address.town !== "N/A" && (
+                        <p>{selectedOrder.address.town}</p>
+                      )}
+                    {selectedOrder.address?.city &&
+                      selectedOrder.address.city !== "N/A" && (
+                        <p>
+                          {selectedOrder.address.city}
+                          {selectedOrder.address.state &&
+                            selectedOrder.address.state !== "N/A" &&
+                            `, ${selectedOrder.address.state}`}
+                          {selectedOrder.address.pincode &&
+                            selectedOrder.address.pincode !== "N/A" &&
+                            ` - ${selectedOrder.address.pincode}`}
+                        </p>
+                      )}
+                    {(!selectedOrder.address ||
+                      selectedOrder.address.city === "N/A") && (
+                      <p className="text-muted">
+                        Address details will be provided soon
                       </p>
-                    )}
-                    {(!selectedOrder.address || selectedOrder.address.city === 'N/A') && (
-                      <p className="text-muted">Address details will be provided soon</p>
                     )}
                   </div>
                   <button className="btn-map">
@@ -398,17 +453,27 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
                       <span>₹{payment.gst}</span>
                     </div>
                     <div className="payment-row total-row">
-                      <span><strong>Total Amount</strong></span>
-                      <span><strong>₹{payment.totalWithGst}</strong></span>
+                      <span>
+                        <strong>Total Amount</strong>
+                      </span>
+                      <span>
+                        <strong>₹{payment.totalWithGst}</strong>
+                      </span>
                     </div>
                     <div className="divider"></div>
                     <div className="payment-row commission-row">
-                      <span>Platform Commission ({payment.commissionPercentage}%)</span>
+                      <span>
+                        Platform Commission ({payment.commissionPercentage}%)
+                      </span>
                       <span>-₹{payment.platformCommission}</span>
                     </div>
                     <div className="payment-row final-row">
-                      <span><strong>Your Earnings</strong></span>
-                      <span className="final-amount"><strong>₹{payment.vendorEarnings}</strong></span>
+                      <span>
+                        <strong>Your Earnings</strong>
+                      </span>
+                      <span className="final-amount">
+                        <strong>₹{payment.vendorEarnings}</strong>
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -416,27 +481,44 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
             </div>
 
             {/* Right Column - Actions */}
+
             <div className="sidebar-content">
               <div className="action-card sticky">
                 <h4>Order Actions</h4>
-                
-                <button className="action-btn btn-start" onClick={() => {
-                  console.log('🖱️ Start Service button clicked');
-                  console.log('Current order:', selectedOrder);
-                  setShowStartConfirm(true);
-                }}>
-                  <i className="bi bi-play-circle-fill"></i>
-                  Start Service
-                </button>
 
-                <button className="action-btn btn-complete" onClick={() => {
-                  console.log('🖱️ Complete Service button clicked');
-                  console.log('Current order:', selectedOrder);
-                  setShowCompleteConfirm(true);
-                }}>
-                  <i className="bi bi-check-circle-fill"></i>
-                  Mark as Completed
-                </button>
+                {/* ASSIGNED → Show Start Service */}
+                {selectedOrder.status === "ASSIGNED" && (
+                  <button
+                    className="action-btn btn-start"
+                    onClick={() => setShowStartConfirm(true)}
+                  >
+                    <i className="bi bi-play-circle-fill"></i>
+                    Start Service
+                  </button>
+                )}
+
+                {/* INPROGRESS → Show Service Started (disabled/info) */}
+                {selectedOrder.status === "INPROGRESS" && (
+                  <button
+                    className="action-btn btn-start"
+                    disabled
+                    style={{ opacity: 0.7, cursor: "not-allowed" }}
+                  >
+                    <i className="bi bi-check-circle-fill"></i>
+                    Service Started
+                  </button>
+                )}
+
+                {/* INPROGRESS → Allow Complete */}
+                {selectedOrder.status === "INPROGRESS" && (
+                  <button
+                    className="action-btn btn-complete"
+                    onClick={() => setShowCompleteConfirm(true)}
+                  >
+                    <i className="bi bi-check-circle-fill"></i>
+                    Mark as Completed
+                  </button>
+                )}
 
                 <button className="action-btn btn-contact">
                   <i className="bi bi-chat-dots-fill"></i>
@@ -448,54 +530,36 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
                   Contact Support
                 </button>
               </div>
-
-              {/* Vendor Info */}
-              {selectedOrder.myVendor && (
-                <div className="vendor-info-card">
-                  <h4>Vendor Info</h4>
-                  <div className="vendor-detail">
-                    <i className="bi bi-person-fill"></i>
-                    <div>
-                      <label>Vendor</label>
-                      <p>
-                        {selectedOrder.myVendor.myUser?.firstName || ''} {selectedOrder.myVendor.myUser?.lastName || ''}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="vendor-detail">
-                    <i className="bi bi-telephone-fill"></i>
-                    <div>
-                      <label>Phone</label>
-                      <p>{selectedOrder.myVendor.myUser?.phone || 'N/A'}</p>
-                    </div>
-                  </div>
-                  <div className="vendor-detail">
-                    <i className="bi bi-briefcase-fill"></i>
-                    <div>
-                      <label>Experience</label>
-                      <p>{selectedOrder.myVendor.experience || 0} years</p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
 
         {/* Start Confirmation Modal */}
         {showStartConfirm && (
-          <div className="modal-backdrop" onClick={() => setShowStartConfirm(false)}>
+          <div
+            className="modal-backdrop"
+            onClick={() => setShowStartConfirm(false)}
+          >
             <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
               <div className="modal-icon primary">
                 <i className="bi bi-play-circle-fill"></i>
               </div>
               <h3>Start Service?</h3>
-              <p>Are you sure you want to mark this service as started? Make sure you've reached the location.</p>
+              <p>
+                Are you sure you want to mark this service as started? Make sure
+                you've reached the location.
+              </p>
               <div className="modal-actions">
-                <button className="modal-btn btn-cancel" onClick={() => setShowStartConfirm(false)}>
+                <button
+                  className="modal-btn btn-cancel"
+                  onClick={() => setShowStartConfirm(false)}
+                >
                   Cancel
                 </button>
-                <button className="modal-btn btn-primary" onClick={handleStartService}>
+                <button
+                  className="modal-btn btn-primary"
+                  onClick={handleStartService}
+                >
                   Yes, Start Service
                 </button>
               </div>
@@ -505,18 +569,30 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
 
         {/* Complete Confirmation Modal */}
         {showCompleteConfirm && (
-          <div className="modal-backdrop" onClick={() => setShowCompleteConfirm(false)}>
+          <div
+            className="modal-backdrop"
+            onClick={() => setShowCompleteConfirm(false)}
+          >
             <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
               <div className="modal-icon success">
                 <i className="bi bi-check-circle-fill"></i>
               </div>
               <h3>Complete Service?</h3>
-              <p>Are you sure you want to mark this service as completed? The customer will be notified.</p>
+              <p>
+                Are you sure you want to mark this service as completed? The
+                customer will be notified.
+              </p>
               <div className="modal-actions">
-                <button className="modal-btn btn-cancel" onClick={() => setShowCompleteConfirm(false)}>
+                <button
+                  className="modal-btn btn-cancel"
+                  onClick={() => setShowCompleteConfirm(false)}
+                >
                   Cancel
                 </button>
-                <button className="modal-btn btn-success" onClick={handleCompleteService}>
+                <button
+                  className="modal-btn btn-success"
+                  onClick={handleCompleteService}
+                >
                   Yes, Complete Service
                 </button>
               </div>
@@ -1024,6 +1100,17 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
             font-size: 2.5rem;
             border: 3px solid;
           }
+          .modal-btn {
+            position: relative;
+            z-index: 10001;
+            pointer-events: auto;
+          }
+
+          .modal-dialog {
+            position: relative;
+            z-index: 10000;
+            pointer-events: auto;
+          }
 
           .modal-icon.primary {
             background: #dbeafe;
@@ -1147,7 +1234,9 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
     <div className="vendor-orders-container">
       <div className="list-header">
         <h2>Assigned Orders</h2>
-        <span className="count-badge">{orders.length} {orders.length === 1 ? 'Order' : 'Orders'}</span>
+        <span className="count-badge">
+          {orders.length} {orders.length === 1 ? "Order" : "Orders"}
+        </span>
       </div>
 
       <div className="orders-grid">
@@ -1158,7 +1247,7 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
                 <span className="label">Order ID</span>
                 <h3>#{order.orderId}</h3>
               </div>
-              <span className="status-badge">ASSIGNED</span>
+              <span className="status-badge">{order.status}</span>
             </div>
 
             <div className="card-body-section">
@@ -1167,7 +1256,9 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
                   <i className="bi bi-calendar-event"></i>
                   <div>
                     <span className="label">Order Date</span>
-                    <span className="value">{dayjs(order.orderDate).format('MMM DD, YYYY')}</span>
+                    <span className="value">
+                      {dayjs(order.orderDate).format("MMM DD, YYYY")}
+                    </span>
                   </div>
                 </div>
 
@@ -1175,7 +1266,9 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
                   <i className="bi bi-clock"></i>
                   <div>
                     <span className="label">Time</span>
-                    <span className="value">{dayjs(order.orderDate).format('hh:mm A')}</span>
+                    <span className="value">
+                      {dayjs(order.orderDate).format("hh:mm A")}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1187,7 +1280,7 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
             </div>
 
             <div className="card-footer-section">
-              <button 
+              <button
                 className="btn-view"
                 onClick={() => handleViewDetails(order)}
               >
@@ -1400,7 +1493,9 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
         }
 
         @keyframes spin {
-          to { transform: rotate(360deg); }
+          to {
+            transform: rotate(360deg);
+          }
         }
 
         .loading-state p,

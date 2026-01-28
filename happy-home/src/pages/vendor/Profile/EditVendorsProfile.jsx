@@ -78,7 +78,7 @@ const EditVendorProfile = () => {
 
       const profile = profileRes.data;
       const address = addressRes.data;
-      const banking = bankingRes.data;
+      const banking = bankingRes.data || {};
 
       console.log(profileRes);
       console.log(addressRes);

@@ -156,20 +156,6 @@ const ViewWorkDetails = () => {
         console.log("🔍 Trying URL:", apiUrl);
         response = await axios.post(apiUrl);
       } 
-      // APPROACH 2: If no orderId, try sending the full data object
-      else {
-        const apiUrl = `http://localhost:8080/vendor/work/${vendorId}/accept`;
-        console.log("🔍 Trying alternative URL:", apiUrl);
-        console.log("🔍 Sending data:", rawData);
-        
-        // Try posting the matching criteria
-        response = await axios.post(apiUrl, {
-          service: rawData.service,
-          timeSlot: rawData.timeSlot,
-          price: rawData.price,
-          address: rawData.address
-        });
-      }
       
       console.log("✅ API Response:", response);
 
