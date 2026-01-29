@@ -1,4 +1,7 @@
+import { Link } from "react-router-dom";
+
 const CTASection = () => {
+  const serviceId = 1; // Example service ID for booking link
   return (
     <section id="contact" className="cta-section py-5 text-white position-relative">
       <div className="container py-5 position-relative" style={{ zIndex: 1 }}>
@@ -14,10 +17,10 @@ const CTASection = () => {
           </p>
 
           <div className="d-flex flex-column flex-sm-row gap-3 justify-content-center">
-            <a href="#" className="btn btn-light btn-lg px-5 d-inline-flex align-items-center justify-content-center gap-2 text-primary fw-bold">
+            <Link to={`/consumer-home/checkout/${serviceId}`} className="btn btn-light btn-lg px-5 d-inline-flex align-items-center justify-content-center gap-2 text-primary fw-bold">
               Book Your Cleaning
               <i className="bi bi-arrow-right"></i>
-            </a>
+            </Link>
             <a href="tel:+1234567890" className="btn btn-outline-light btn-lg px-5 d-inline-flex align-items-center justify-content-center gap-2 fw-bold">
               <i className="bi bi-telephone-fill"></i>
               Call Us Now

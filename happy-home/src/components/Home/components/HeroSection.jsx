@@ -1,6 +1,8 @@
+import { Link } from "react-router-dom";
 import heroImage from "../../../assets/hero-cleaning.jpg";
 
 const HeroSection = () => {
+  const serviceId = 1; // Example service ID for booking link
   return (
     <section className="hero-section">
       <div className="container">
@@ -9,7 +11,7 @@ const HeroSection = () => {
           <div className="col-lg-6 fade-in-left">
             <div className="hero-badge mb-4">
               <i className="bi bi-star-fill text-warning"></i>
-              <span className="fw-medium">Trusted by 1,200+ Happy Homes</span>
+              <span className="fw-medium">Trusted by 1,200+ Happy Home  s</span>
             </div>
 
             <h1 className="display-4 fw-bold text-dark mb-4">
@@ -24,13 +26,13 @@ const HeroSection = () => {
             </p>
 
             <div className="d-flex flex-column flex-sm-row gap-3 mb-5">
-              <a href="#contact" className="btn btn-primary btn-lg px-5 d-flex align-items-center justify-content-center gap-2">
+              <Link to={`/consumer-home/checkout/${serviceId}`} className="btn btn-primary btn-lg px-5 d-flex align-items-center justify-content-center gap-2">
                 Book a Cleaning
                 <i className="bi bi-arrow-right"></i>
-              </a>
-              <a href="#services" className="btn btn-outline-dark btn-lg px-5">
+              </Link>
+              <Link to="/consumer-home/service-listing" className="btn btn-outline-dark btn-lg px-5">
                 View Services
-              </a>
+              </Link>
             </div>
 
             {/* Trust Badges */}
