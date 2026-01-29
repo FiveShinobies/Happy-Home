@@ -27,7 +27,7 @@ const ServicesSection = () => {
         const response = await axios.get('http://localhost:8080/services');
         // Limit to only 3 services
         setServices(response.data.slice(4, 7));
-        console.log('Fetched services:', response.data);
+        // console.log('Fetched services:', response.data);
       } catch (error) {
         console.error('Error fetching services:', error);
       }
