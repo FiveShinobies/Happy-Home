@@ -6,13 +6,13 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
 import service1 from "../../../assets/service1.jpg.jpeg";
 import service2 from "../../../assets/service2.jpg.jpeg";
-import service3 from  "../../../assets/service3.jpg.jpeg";
+import service3 from "../../../assets/service3.jpg.jpeg";
 import service4 from "../../../assets/service4.avif";
 import service5 from "../../../assets/service5.avif";
 import service6 from "../../../assets/service6.avif";
 
 const imageData =
-    [service1, service2, service3, service4, service5, service6];
+  [service1, service2, service3, service4, service5, service6];
 
 const ServiceDetails = () => {
   const { id } = useParams();
@@ -53,7 +53,7 @@ const ServiceDetails = () => {
     return icons[category] || "📦";
   };
 
-  
+
   let min = 1;
   let max = imageData.length - 1;
   Math.floor(Math.random() * (max - min + 1)) + min;
@@ -195,7 +195,7 @@ const ServiceDetails = () => {
     }
   };
 
-  
+
 
   if (loading) {
     return (
@@ -218,7 +218,7 @@ const ServiceDetails = () => {
           <Package size={64} style={{ color: '#e0e0e0' }} />
           <h4 className="mt-3" style={{ color: '#000000' }}>Service not found</h4>
           <p className="text-muted">The service you're looking for doesn't exist.</p>
-          <button 
+          <button
             className="btn mt-3"
             style={styles.bookBtn}
             onClick={() => navigate("/consumer-home/service-listing")}
@@ -233,8 +233,8 @@ const ServiceDetails = () => {
   }
 
   // Prepare images array (use provided images or show placeholder)
-  const images = service.images && service.images.length > 0 
-    ? service.images 
+  const images = service.images && service.images.length > 0
+    ? service.images
     : [imageData[Math.floor(Math.random() * (max - min + 1)) + min]];
 
   return (
@@ -270,7 +270,7 @@ const ServiceDetails = () => {
                 ) : (
                   <Package size={80} style={{ color: '#1e40af', opacity: 0.3 }} />
                 )}
-                
+
                 {/* Category Badge */}
                 <div style={styles.categoryBadge}>
                   <span>{getCategoryIcon(service.category)}</span>
@@ -451,8 +451,8 @@ const ServiceDetails = () => {
                     <div>
                       <div className="small fw-bold" style={{ color: '#000000' }}>Rating</div>
                       <div className="small text-muted">
-                        {service.avgRating > 0 
-                          ? `${service.avgRating.toFixed(1)} (${service.reviews?.length || 0} reviews)` 
+                        {service.avgRating > 0
+                          ? `${service.avgRating.toFixed(1)} (${service.reviews?.length || 0} reviews)`
                           : 'No ratings yet'}
                       </div>
                     </div>
@@ -469,8 +469,8 @@ const ServiceDetails = () => {
 
                 <hr style={{ borderColor: '#e0e0e0' }} />
 
-                <Link 
-                  to={`/consumer-home/checkout/${service.serviceId}`} 
+                <Link
+                  to={`/consumer-home/checkout/${service.serviceId}`}
                   // state={{ serviceId: service.serviceId }}
                   className="text-decoration-none"
                 >

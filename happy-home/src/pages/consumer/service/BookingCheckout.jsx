@@ -31,42 +31,49 @@ const BookingCheckout = () => {
   const navigate = useNavigate();
   const isLoggedIn = sessionStorage.getItem("user") !== null;
   if (!isLoggedIn) {
-    return <LoginRequired onLogin={() => navigate("/login")} />;
+    return (
+      <LoginRequired
+        onLogin={() =>
+          navigate('/login')
+        }
+      />
+    );
   }
 
   // Get serviceId from URL params or location state
   const { serviceId } = useParams();
-  const cId = JSON.parse(sessionStorage.getItem("user")).userId;
-
-  const fetchBookingData = async () => {
-    try {
-      if (!serviceId) {
-        alert("Service ID not provided");
-        navigate(-1);
-        return;
-      }
-
-      const response = await axios.get(
-        `http://localhost:8080/booking/form/${cId}/${serviceId}`,
-      );
-      console.log("Fetched booking data:", response.data);
-      setConsumerData(response.data);
-
-      // Set first address as default selected
-      if (response.data.addresses && response.data.addresses.length > 0) {
-        setSelectedAddress(response.data.addresses[0]);
-      }
-
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching booking data:", error);
-      alert("Failed to load booking information");
-      setLoading(false);
-    }
-  };
-
+  const cId = JSON.parse(sessionStorage.getItem('user')).userId;
+  console.log('Consumer ID:', cId);
   // Fetch consumer and service data on component mount
   useEffect(() => {
+
+    const fetchBookingData = async () => {
+      try {
+        if (!serviceId) {
+          alert('Service ID not provided');
+          navigate(-1);
+          return;
+        }
+
+        const response = await axios.get(
+          `http://localhost:8080/booking/form/${cId}/${serviceId}`
+        );
+        console.log('Fetched booking data:', response.data);
+        setConsumerData(response.data);
+
+        // Set first address as default selected
+        if (response.data.addresses && response.data.addresses.length > 0) {
+          setSelectedAddress(response.data.addresses[0]);
+        }
+
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching booking data:', error);
+        alert('Failed to load booking information');
+        setLoading(false);
+      }
+    };
+
     fetchBookingData();
   }, [serviceId, cId, navigate]);
 
@@ -432,8 +439,7 @@ const BookingCheckout = () => {
                     Service Address
                   </h2>
 
-                  {consumerData?.addresses &&
-                  consumerData.addresses.length > 0 ? (
+                  {consumerData?.addresses && consumerData.addresses.length > 0 ? (
                     <div>
                       {consumerData.addresses.map((address) => (
                         <div
@@ -447,12 +453,10 @@ const BookingCheckout = () => {
                           onClick={() => setSelectedAddress(address)}
                         >
                           <div className="d-flex align-items-start gap-3">
-                            <div
-                              style={{
-                                minWidth: "20px",
-                                paddingTop: "2px",
-                              }}
-                            >
+                            <div style={{
+                              minWidth: '20px',
+                              paddingTop: '2px'
+                            }}>
                               <input
                                 type="radio"
                                 name="address"
@@ -462,10 +466,10 @@ const BookingCheckout = () => {
                                 }
                                 onChange={() => setSelectedAddress(address)}
                                 style={{
-                                  width: "20px",
-                                  height: "20px",
-                                  accentColor: "#1e40af",
-                                  cursor: "pointer",
+                                  width: '20px',
+                                  height: '20px',
+                                  accentColor: '#1e40af',
+                                  cursor: 'pointer'
                                 }}
                               />
                             </div>
@@ -565,11 +569,11 @@ const BookingCheckout = () => {
                       checked={isUrgent}
                       onChange={(e) => setIsUrgent(e.target.checked)}
                       style={{
-                        width: "20px",
-                        height: "20px",
-                        accentColor: "#1e40af",
-                        cursor: "pointer",
-                        marginTop: "2px",
+                        width: '20px',
+                        height: '20px',
+                        accentColor: '#1e40af',
+                        cursor: 'pointer',
+                        marginTop: '2px'
                       }}
                     />
                     <label
@@ -693,10 +697,7 @@ const BookingCheckout = () => {
               </div>
 
               {/* Service Guarantee */}
-              <div
-                className="card mb-3"
-                style={{ ...styles.card, background: "#f8f9fa" }}
-              >
+              <div className="card mb-3" style={{ ...styles.card, background: '#f8f9fa' }}>
                 <div className="card-body p-4">
                   <div className="d-flex align-items-center gap-2 mb-3">
                     <CheckCircle size={20} style={{ color: "#1e40af" }} />
@@ -740,11 +741,9 @@ const BookingCheckout = () => {
               </div>
 
               {/* Security Badge */}
-              <div
-                className="d-flex align-items-center justify-content-center gap-2 p-3 mb-3 rounded"
-                style={{ background: "#f8f9fa", border: "1px solid #e0e0e0" }}
-              >
-                <Lock size={18} style={{ color: "#1e40af" }} />
+              <div className="d-flex align-items-center justify-content-center gap-2 p-3 mb-3 rounded"
+                style={{ background: '#f8f9fa', border: '1px solid #e0e0e0' }}>
+                <Lock size={18} style={{ color: '#1e40af' }} />
                 <span className="small text-muted">
                   Your payment information is secure and encrypted
                 </span>
@@ -771,6 +770,6 @@ const BookingCheckout = () => {
       </div>
     </div>
   );
-};
+}
 
 export default BookingCheckout;
