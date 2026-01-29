@@ -3,7 +3,6 @@ import { ArrowLeft, Save, X } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 
-
 const AddService = () => {
   const { id } = useParams();
   const navigate = useNavigate();

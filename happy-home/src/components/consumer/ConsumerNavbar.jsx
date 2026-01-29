@@ -1,20 +1,38 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate  } from 'react-router-dom';
 import { Home, Package, ShoppingCart, User, Info, Phone, Menu, X, ShoppingBag , LogOut} from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const ConsumerNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const isAuthenticated = sessionStorage.getItem('user') !== null;
+  const handleLogout = () => {
+    // Clear user session or token here
+    console.log('User logged out');
+    sessionStorage.clear();
+    toast.success('Logged out successfully');
+    navigate('/');
+  }
 
   const navItems = [
-    { path: '/consumer-home', label: 'Home', icon: Home },
-    { path: '/consumer-home/service-listing', label: 'Services', icon: Package },
-    { path: '/consumer-home/orders', label: 'Orders', icon: ShoppingBag },
-    { path: '/consumer-home/about-us', label: 'About Us', icon: Info },
-    { path: '/consumer-home/contact-us', label: 'Contact', icon: Phone },
-    { path: '/consumer-home/consumer-profile', label: 'Profile', icon: User },
-    { path: '/', label: 'logout', icon: LogOut  }
-  ];
+  { id: 'home', path: '/', label: 'Home', icon: Home },
+  { id: 'services', path: '/consumer-home/service-listing', label: 'Services', icon: Package },
+  { id: 'orders', path: '/consumer-home/orders', label: 'Orders', icon: ShoppingBag },
+  { id: 'about', path: '/consumer-home/about-us', label: 'About Us', icon: Info },
+  { id: 'contact', path: '/consumer-home/contact-us', label: 'Contact', icon: Phone },
+
+  ...(isAuthenticated
+    ? [
+        { id: 'profile', path: '/consumer-home/consumer-profile', label: 'Profile', icon: User },
+        { id: 'logout', label: 'Logout', icon: LogOut, onClick: () => handleLogout() },
+      ]
+    : [
+        { id: 'login', path: '/login', label: 'Login', icon: User },
+      ]),
+];
+
 
   const isActive = (path) => location.pathname === path;
 
@@ -25,6 +43,7 @@ const ConsumerNavbar = () => {
           <span style={styles.brandText}>HappyHome</span>
         </Link>
 
+
         {/* Desktop Navigation */}
         <div style={styles.desktopNav}>
           {navItems.map((item) => {
@@ -32,8 +51,14 @@ const ConsumerNavbar = () => {
             const active = isActive(item.path);
             return (
               <Link
-                key={item.path}
-                to={item.path}
+                key={item.id}
+                to={item.path || '#'}
+                onClick={(e) => {
+                  if (item.onClick) {
+                    e.preventDefault();
+                    item.onClick();
+                  }
+                }} 
                 style={{
                   ...styles.navLink,
                   ...(active ? styles.navLinkActive : {}),

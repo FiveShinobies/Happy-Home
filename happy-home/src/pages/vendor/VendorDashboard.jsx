@@ -1,105 +1,295 @@
-import { useState } from 'react';
-import { Container, Row, Col, Card, Button, Badge, ProgressBar } from 'react-bootstrap';
+import { useEffect, useState } from 'react';
+import { Container, Row, Col, Card, Button, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { 
   Wallet, DollarSign, TrendingUp, Clock, 
-  CheckCircle, Package, Star, ArrowUpRight,
-  ArrowDownRight, Calendar, Award, Users
+  CheckCircle, Star, Calendar, Package,
+  ArrowUpRight, ArrowDownRight
 } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import axios from 'axios';
+import dayjs from 'dayjs';
 
 const VendorDashboard = () => {
-  const [walletBalance] = useState(12450.50);
-  const [pendingAmount] = useState(3200.00);
+  const vendorId = JSON.parse(sessionStorage.getItem('user')).userId;
+  
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalEarnings: 0,
+    completedOrders: 0,
+    pendingOrders: 0,
+    inProgressOrders: 0,
+    averageRating: 0,
+    totalOrders: 0
+  });
 
-  // Earnings data for chart
-  const earningsData = [
-    { day: 'Mon', earnings: 850 },
-    { day: 'Tue', earnings: 1200 },
-    { day: 'Wed', earnings: 980 },
-    { day: 'Thu', earnings: 1450 },
-    { day: 'Fri', earnings: 1800 },
-    { day: 'Sat', earnings: 2100 },
-    { day: 'Sun', earnings: 1650 },
-  ];
+  // Fetch dashboard data
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`http://localhost:8080/vendor/dashboard/${vendorId}`);
+      console.log('Dashboard Data:', response.data);
+      setDashboardData(response.data);
+      calculateStats(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      setLoading(false);
+    }
+  };
 
-  // Recent transactions
-  const transactions = [
-    { id: 'TXN-001', type: 'credit', amount: 1200, description: 'Order #1234 - Plumbing Service', date: '2 hours ago', status: 'completed' },
-    { id: 'TXN-002', type: 'credit', amount: 850, description: 'Order #1233 - Electrical Work', date: '5 hours ago', status: 'completed' },
-    { id: 'TXN-003', type: 'debit', amount: 500, description: 'Withdrawal to Bank', date: '1 day ago', status: 'processed' },
-    { id: 'TXN-004', type: 'credit', amount: 1450, description: 'Order #1231 - AC Repair', date: '2 days ago', status: 'completed' },
-  ];
+  // Calculate statistics from order data
+  const calculateStats = (data) => {
+    if (!data || !data.order) return;
 
-  // Active orders
-  const activeOrders = [
-    { id: '#ORD-1240', customer: 'John Doe', service: 'Plumbing', status: 'In Progress', payment: 1200, time: '2 hours ago' },
-    { id: '#ORD-1239', customer: 'Sarah Smith', service: 'Electrical', status: 'Scheduled', payment: 1500, time: 'Tomorrow 10 AM' },
-    { id: '#ORD-1238', customer: 'Mike Johnson', service: 'AC Repair', status: 'In Progress', payment: 2000, time: '1 hour ago' },
-  ];
+    const orders = data.order;
+    const completed = orders.filter(o => o.status === 'COMPLETED').length;
+    const pending = orders.filter(o => o.status === 'ASSIGNED').length;
+    const inProgress = orders.filter(o => o.status === 'INPROGRESS' || o.status === 'IN_PROGRESS').length;
+    
+    // Calculate average rating from orders with ratings
+    const ratedOrders = orders.filter(o => o.rating !== null && o.rating > 0);
+    const avgRating = ratedOrders.length > 0 
+      ? (ratedOrders.reduce((sum, o) => sum + o.rating, 0) / ratedOrders.length).toFixed(1)
+      : 0;
 
-  // Stats
-  const stats = [
-    { label: 'Total Earnings', value: `₹${walletBalance.toLocaleString()}`, icon: DollarSign, color: '#10B981', change: '+12.5%' },
-    { label: 'Pending Amount', value: `₹${pendingAmount.toLocaleString()}`, icon: Clock, color: '#F59E0B', change: '3 orders' },
-    { label: 'Completed Orders', value: '156', icon: CheckCircle, color: '#3B82F6', change: '+8 this week' },
-    { label: 'Customer Rating', value: '4.8', icon: Star, color: '#8B5CF6', change: '234 reviews' },
-  ];
+    setStats({
+      totalEarnings: data.balance || 0,
+      completedOrders: completed,
+      pendingOrders: pending,
+      inProgressOrders: inProgress,
+      averageRating: avgRating,
+      totalOrders: orders.length
+    });
+  };
+
+  // Get earnings by day (last 7 days)
+  const getEarningsData = () => {
+    if (!dashboardData || !dashboardData.order) return [];
+
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = dayjs().subtract(i, 'day');
+      last7Days.push({
+        day: date.format('ddd'),
+        fullDate: date.format('YYYY-MM-DD'),
+        earnings: 0
+      });
+    }
+
+    // Sum earnings for each day
+    dashboardData.order.forEach(order => {
+      if (order.status === 'COMPLETED') {
+        const orderDate = dayjs(order.orderDateTime).format('YYYY-MM-DD');
+        const dayData = last7Days.find(d => d.fullDate === orderDate);
+        if (dayData) {
+          dayData.earnings += order.orderPrice;
+        }
+      }
+    });
+
+    return last7Days;
+  };
+
+  // Get status distribution for pie chart
+  const getStatusDistribution = () => {
+    if (!dashboardData || !dashboardData.order) return [];
+
+    const statusCount = {
+      COMPLETED: 0,
+      ASSIGNED: 0,
+      INPROGRESS: 0
+    };
+
+    dashboardData.order.forEach(order => {
+      const status = order.status === 'IN_PROGRESS' ? 'INPROGRESS' : order.status;
+      if (statusCount.hasOwnProperty(status)) {
+        statusCount[status]++;
+      }
+    });
+
+    return [
+      { name: 'Completed', value: statusCount.COMPLETED, color: '#10B981' },
+      { name: 'In Progress', value: statusCount.INPROGRESS, color: '#3B82F6' },
+      { name: 'Assigned', value: statusCount.ASSIGNED, color: '#F59E0B' }
+    ].filter(item => item.value > 0);
+  };
+
+  // Get recent orders (last 5)
+  const getRecentOrders = () => {
+    if (!dashboardData || !dashboardData.order) return [];
+    
+    return [...dashboardData.order]
+      .sort((a, b) => new Date(b.orderDateTime) - new Date(a.orderDateTime))
+      .slice(0, 5);
+  };
+
+  // Get payment status summary
+  const getPaymentSummary = () => {
+    if (!dashboardData || !dashboardData.order) return { success: 0, pending: 0, failed: 0 };
+
+    const summary = {
+      success: 0,
+      pending: 0,
+      failed: 0
+    };
+
+    dashboardData.order.forEach(order => {
+      if (order.paymentStatus === 'SUCCESS') summary.success++;
+      else if (order.paymentStatus === 'PENDING') summary.pending++;
+      else if (order.paymentStatus === 'FAILED') summary.failed++;
+    });
+
+    return summary;
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [vendorId]);
+
+  if (loading) {
+    return (
+      <Container fluid className="p-4" style={{ minHeight: '100vh', background: '#f8fafc' }}>
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3 text-muted">Loading dashboard...</p>
+        </div>
+      </Container>
+    );
+  }
+
+  const earningsData = getEarningsData();
+  const statusDistribution = getStatusDistribution();
+  const recentOrders = getRecentOrders();
+  const paymentSummary = getPaymentSummary();
 
   return (
-    <Container fluid className="p-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+    <Container fluid className="p-4" style={{ minHeight: '100vh', background: '#f8fafc' }}>
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h2 className="fw-bold mb-1" style={{ color: '#000000' }}>Vendor Dashboard</h2>
-          <p className="text-muted small mb-0">Manage your services, orders, and earnings</p>
+          <h2 className="fw-bold mb-1" style={{ color: '#1e293b' }}>Vendor Dashboard</h2>
+          <p className="text-muted mb-0">Welcome back! Here's your performance overview</p>
         </div>
-        <Button variant="primary" size="sm">
-          <Calendar size={16} className="me-2" />
-          View Schedule
-        </Button>
+        <Link to="/work">
+          <Button 
+            style={{ 
+              background: '#1e40af',
+              border: 'none',
+              borderRadius: '8px'
+            }}
+          >
+            <Calendar size={16} className="me-2" />
+            View All Orders
+          </Button>
+        </Link>
       </div>
 
-      {/* Wallet Card - Featured */}
-      <Card className="border-0 shadow-lg mb-4" style={{ background: 'linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%)' }}>
+      {/* Wallet Balance Card */}
+      <Card 
+        className="border-0 shadow-sm mb-4"
+        style={{ 
+          background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)',
+          borderRadius: '16px'
+        }}
+      >
         <Card.Body className="p-4">
           <Row className="align-items-center">
-            <Col xs={12} md={8}>
+            <Col md={8}>
               <div className="d-flex align-items-center gap-3 mb-3">
                 <div 
-                  className="d-flex align-items-center justify-content-center rounded-3"
-                  style={{ width: 56, height: 56, backgroundColor: 'rgba(255,255,255,0.2)' }}
+                  className="d-flex align-items-center justify-content-center"
+                  style={{ 
+                    width: 64, 
+                    height: 64, 
+                    background: 'rgba(255,255,255,0.15)',
+                    borderRadius: '12px',
+                    border: '2px solid rgba(255,255,255,0.2)'
+                  }}
                 >
-                  <Wallet size={28} style={{ color: '#ffffff' }} />
+                  <Wallet size={32} color="#ffffff" />
                 </div>
                 <div>
-                  <p className="mb-1 small" style={{ color: 'rgba(255,255,255,0.8)' }}>Total Wallet Balance</p>
-                  <h1 className="mb-0 fw-bold" style={{ color: '#ffffff', fontSize: '36px' }}>
-                    ₹{walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  <p className="mb-1" style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>
+                    Total Wallet Balance
+                  </p>
+                  <h1 className="mb-0 fw-bold" style={{ color: '#ffffff', fontSize: '42px' }}>
+                    ₹{stats.totalEarnings.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </h1>
                 </div>
               </div>
-              <div className="d-flex gap-3">
-                <div>
-                  <p className="mb-0 small" style={{ color: 'rgba(255,255,255,0.8)' }}>Pending Clearance</p>
-                  <p className="mb-0 fw-semibold" style={{ color: '#ffffff' }}>
-                    ₹{pendingAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div className="ms-4">
-                  <p className="mb-0 small" style={{ color: 'rgba(255,255,255,0.8)' }}>This Month</p>
-                  <p className="mb-0 fw-semibold d-flex align-items-center gap-1" style={{ color: '#ffffff' }}>
-                    +15.2% <TrendingUp size={16} />
-                  </p>
-                </div>
-              </div>
+              
+              <Row className="g-3">
+                <Col xs={6} md={4}>
+                  <div 
+                    className="p-3"
+                    style={{ 
+                      background: 'rgba(255,255,255,0.1)',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(255,255,255,0.15)'
+                    }}
+                  >
+                    <p className="mb-1 small" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                      Completed Orders
+                    </p>
+                    <h4 className="mb-0 fw-bold" style={{ color: '#ffffff' }}>
+                      {stats.completedOrders}
+                    </h4>
+                  </div>
+                </Col>
+                <Col xs={6} md={4}>
+                  <div 
+                    className="p-3"
+                    style={{ 
+                      background: 'rgba(255,255,255,0.1)',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(255,255,255,0.15)'
+                    }}
+                  >
+                    <p className="mb-1 small" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                      In Progress
+                    </p>
+                    <h4 className="mb-0 fw-bold" style={{ color: '#ffffff' }}>
+                      {stats.inProgressOrders}
+                    </h4>
+                  </div>
+                </Col>
+                <Col xs={6} md={4}>
+                  <div 
+                    className="p-3"
+                    style={{ 
+                      background: 'rgba(255,255,255,0.1)',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(255,255,255,0.15)'
+                    }}
+                  >
+                    <p className="mb-1 small" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                      Pending
+                    </p>
+                    <h4 className="mb-0 fw-bold" style={{ color: '#ffffff' }}>
+                      {stats.pendingOrders}
+                    </h4>
+                  </div>
+                </Col>
+              </Row>
             </Col>
-            <Col xs={12} md={4} className="mt-3 mt-md-0">
+            <Col md={4} className="mt-3 mt-md-0">
               <div className="d-grid gap-2">
-                <Button variant="light" size="lg">
+                <Button 
+                  variant="light" 
+                  size="lg"
+                  style={{ borderRadius: '8px', fontWeight: 600 }}
+                >
+                  <Wallet size={18} className="me-2" />
                   Withdraw Money
                 </Button>
-                <Button variant="outline-light" size="sm">
+                <Button 
+                  variant="outline-light" 
+                  style={{ borderRadius: '8px', fontWeight: 600 }}
+                >
                   Transaction History
                 </Button>
               </div>
@@ -110,206 +300,348 @@ const VendorDashboard = () => {
 
       {/* Stats Cards */}
       <Row className="g-3 mb-4">
-        {stats.map((stat, index) => (
-          <Col key={index} xs={12} sm={6} lg={3}>
-            <Card className="border-0 shadow-sm h-100">
-              <Card.Body className="p-3">
-                <div className="d-flex justify-content-between align-items-start mb-2">
-                  <div 
-                    className="d-flex align-items-center justify-content-center rounded-2"
-                    style={{ 
-                      width: 44, 
-                      height: 44, 
-                      backgroundColor: `${stat.color}20`
-                    }}
-                  >
-                    <stat.icon size={22} style={{ color: stat.color }} />
-                  </div>
-                  <TrendingUp size={16} style={{ color: '#10B981' }} />
+        <Col xs={12} sm={6} lg={3}>
+          <Card 
+            className="border-0 shadow-sm h-100"
+            style={{ borderRadius: '12px' }}
+          >
+            <Card.Body className="p-3">
+              <div className="d-flex justify-content-between align-items-start mb-2">
+                <div 
+                  className="d-flex align-items-center justify-content-center"
+                  style={{ 
+                    width: 48, 
+                    height: 48, 
+                    background: '#dbeafe',
+                    borderRadius: '10px',
+                    border: '2px solid #bfdbfe'
+                  }}
+                >
+                  <DollarSign size={24} color="#1e40af" />
                 </div>
-                <h3 className="fw-bold mb-1" style={{ color: '#000000', fontSize: '24px' }}>
-                  {stat.value}
-                </h3>
-                <p className="text-muted small mb-1">{stat.label}</p>
-                <span className="small fw-semibold" style={{ color: stat.color }}>
-                  {stat.change}
-                </span>
-              </Card.Body>
-            </Card>
-          </Col>
-        ))}
+                <TrendingUp size={20} color="#10B981" />
+              </div>
+              <h3 className="fw-bold mb-1" style={{ color: '#1e293b', fontSize: '28px' }}>
+                ₹{stats.totalEarnings.toFixed(2)}
+              </h3>
+              <p className="text-muted small mb-0">Total Earnings</p>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col xs={12} sm={6} lg={3}>
+          <Card 
+            className="border-0 shadow-sm h-100"
+            style={{ borderRadius: '12px' }}
+          >
+            <Card.Body className="p-3">
+              <div className="d-flex justify-content-between align-items-start mb-2">
+                <div 
+                  className="d-flex align-items-center justify-content-center"
+                  style={{ 
+                    width: 48, 
+                    height: 48, 
+                    background: '#d1fae5',
+                    borderRadius: '10px',
+                    border: '2px solid #6ee7b7'
+                  }}
+                >
+                  <CheckCircle size={24} color="#10B981" />
+                </div>
+              </div>
+              <h3 className="fw-bold mb-1" style={{ color: '#1e293b', fontSize: '28px' }}>
+                {stats.completedOrders}
+              </h3>
+              <p className="text-muted small mb-0">Completed Orders</p>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col xs={12} sm={6} lg={3}>
+          <Card 
+            className="border-0 shadow-sm h-100"
+            style={{ borderRadius: '12px' }}
+          >
+            <Card.Body className="p-3">
+              <div className="d-flex justify-content-between align-items-start mb-2">
+                <div 
+                  className="d-flex align-items-center justify-content-center"
+                  style={{ 
+                    width: 48, 
+                    height: 48, 
+                    background: '#fef3c7',
+                    borderRadius: '10px',
+                    border: '2px solid #fde68a'
+                  }}
+                >
+                  <Clock size={24} color="#F59E0B" />
+                </div>
+              </div>
+              <h3 className="fw-bold mb-1" style={{ color: '#1e293b', fontSize: '28px' }}>
+                {stats.pendingOrders}
+              </h3>
+              <p className="text-muted small mb-0">Pending Orders</p>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col xs={12} sm={6} lg={3}>
+          <Card 
+            className="border-0 shadow-sm h-100"
+            style={{ borderRadius: '12px' }}
+          >
+            <Card.Body className="p-3">
+              <div className="d-flex justify-content-between align-items-start mb-2">
+                <div 
+                  className="d-flex align-items-center justify-content-center"
+                  style={{ 
+                    width: 48, 
+                    height: 48, 
+                    background: '#fce7f3',
+                    borderRadius: '10px',
+                    border: '2px solid #fbcfe8'
+                  }}
+                >
+                  <Star size={24} color="#EC4899" />
+                </div>
+              </div>
+              <h3 className="fw-bold mb-1" style={{ color: '#1e293b', fontSize: '28px' }}>
+                {stats.averageRating || 'N/A'}
+              </h3>
+              <p className="text-muted small mb-0">Average Rating</p>
+            </Card.Body>
+          </Card>
+        </Col>
       </Row>
 
       <Row className="g-4 mb-4">
         {/* Earnings Chart */}
         <Col xs={12} lg={8}>
-          <Card className="border-0 shadow-sm h-100">
+          <Card className="border-0 shadow-sm h-100" style={{ borderRadius: '12px' }}>
             <Card.Body className="p-4">
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                  <h5 className="fw-semibold mb-1">Weekly Earnings</h5>
-                  <p className="text-muted small mb-0">Your earnings over the last 7 days</p>
+                  <h5 className="fw-bold mb-1" style={{ color: '#1e293b' }}>
+                    Weekly Earnings
+                  </h5>
+                  <p className="text-muted small mb-0">Last 7 days performance</p>
                 </div>
-                <DollarSign size={20} style={{ color: '#6c757d' }} />
+                <DollarSign size={20} color="#64748b" />
               </div>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={earningsData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                  <XAxis dataKey="day" stroke="#6c757d" style={{ fontSize: '12px' }} />
-                  <YAxis stroke="#6c757d" style={{ fontSize: '12px' }} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#ffffff', 
-                      border: '1px solid #e0e0e0',
-                      borderRadius: '8px'
-                    }}
-                  />
-                  <Bar dataKey="earnings" fill="#10B981" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              
+              {earningsData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={earningsData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis 
+                      dataKey="day" 
+                      stroke="#64748b"
+                      style={{ fontSize: '12px' }}
+                    />
+                    <YAxis 
+                      stroke="#64748b"
+                      style={{ fontSize: '12px' }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        background: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      }}
+                      formatter={(value) => [`₹${value}`, 'Earnings']}
+                    />
+                    <Bar 
+                      dataKey="earnings" 
+                      fill="#1e40af"
+                      radius={[8, 8, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="text-center py-5 text-muted">
+                  <Package size={48} className="mb-3" />
+                  <p>No earnings data available</p>
+                </div>
+              )}
             </Card.Body>
           </Card>
         </Col>
 
-        {/* Quick Stats */}
+        {/* Order Status Distribution */}
         <Col xs={12} lg={4}>
-          <Card className="border-0 shadow-sm h-100">
+          <Card className="border-0 shadow-sm h-100" style={{ borderRadius: '12px' }}>
             <Card.Body className="p-4">
-              <h5 className="fw-semibold mb-4">Performance</h5>
+              <h5 className="fw-bold mb-3" style={{ color: '#1e293b' }}>
+                Order Status
+              </h5>
               
-              <div className="mb-4">
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <span className="small fw-medium">Completion Rate</span>
-                  <span className="small fw-bold" style={{ color: '#10B981' }}>92%</span>
+              {statusDistribution.length > 0 ? (
+                <>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie
+                        data={statusDistribution}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {statusDistribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  
+                  <div className="mt-3">
+                    {statusDistribution.map((item, index) => (
+                      <div 
+                        key={index}
+                        className="d-flex justify-content-between align-items-center mb-2"
+                      >
+                        <div className="d-flex align-items-center gap-2">
+                          <div 
+                            style={{ 
+                              width: 12, 
+                              height: 12, 
+                              background: item.color,
+                              borderRadius: '3px'
+                            }}
+                          />
+                          <span className="small">{item.name}</span>
+                        </div>
+                        <span className="small fw-bold">{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-4 text-muted">
+                  <p className="small">No order data available</p>
                 </div>
-                <ProgressBar now={92} style={{ height: '8px' }} variant="success" />
-              </div>
+              )}
 
-              <div className="mb-4">
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <span className="small fw-medium">Response Time</span>
-                  <span className="small fw-bold" style={{ color: '#3B82F6' }}>85%</span>
+              {/* Payment Summary */}
+              <div className="mt-4 pt-3" style={{ borderTop: '1px solid #e2e8f0' }}>
+                <h6 className="fw-bold mb-3 small" style={{ color: '#1e293b' }}>
+                  Payment Status
+                </h6>
+                <div className="d-flex justify-content-between mb-2">
+                  <span className="small text-muted">Successful</span>
+                  <span className="small fw-bold" style={{ color: '#10B981' }}>
+                    {paymentSummary.success}
+                  </span>
                 </div>
-                <ProgressBar now={85} style={{ height: '8px' }} />
-              </div>
-
-              <div className="mb-4">
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <span className="small fw-medium">Customer Satisfaction</span>
-                  <span className="small fw-bold" style={{ color: '#8B5CF6' }}>96%</span>
+                <div className="d-flex justify-content-between mb-2">
+                  <span className="small text-muted">Pending</span>
+                  <span className="small fw-bold" style={{ color: '#F59E0B' }}>
+                    {paymentSummary.pending}
+                  </span>
                 </div>
-                <ProgressBar now={96} style={{ height: '8px' }} variant="info" />
-              </div>
-
-              <div className="p-3 rounded-3" style={{ backgroundColor: '#FEF3C7' }}>
-                <div className="d-flex align-items-center gap-2 mb-2">
-                  <Award size={20} style={{ color: '#F59E0B' }} />
-                  <span className="fw-semibold small" style={{ color: '#F59E0B' }}>Achievement Unlocked!</span>
+                <div className="d-flex justify-content-between">
+                  <span className="small text-muted">Failed</span>
+                  <span className="small fw-bold" style={{ color: '#EF4444' }}>
+                    {paymentSummary.failed}
+                  </span>
                 </div>
-                <p className="small mb-0" style={{ color: '#92400E' }}>
-                  You've completed 150+ orders. Keep up the great work!
-                </p>
               </div>
             </Card.Body>
           </Card>
         </Col>
       </Row>
 
-      <Row className="g-4">
-        {/* Active Orders */}
-        <Col xs={12} lg={7}>
-          <Card className="border-0 shadow-sm h-100">
-            <Card.Body className="p-3">
+      {/* Recent Orders */}
+      <Row>
+        <Col xs={12}>
+          <Card className="border-0 shadow-sm" style={{ borderRadius: '12px' }}>
+            <Card.Body className="p-4">
               <div className="d-flex justify-content-between align-items-center mb-3">
-                <h6 className="fw-semibold mb-0">Active Orders</h6>
+                <h5 className="fw-bold mb-0" style={{ color: '#1e293b' }}>
+                  Recent Orders
+                </h5>
                 <Link 
-                  to="/work" 
-                  className="text-decoration-none small fw-medium d-flex align-items-center gap-1"
-                  style={{ color: '#0d6efd' }}
+                  to="/work"
+                  className="text-decoration-none d-flex align-items-center gap-1"
+                  style={{ color: '#1e40af', fontSize: '14px', fontWeight: 600 }}
                 >
-                  View All <ArrowUpRight size={14} />
+                  View All <ArrowUpRight size={16} />
                 </Link>
               </div>
-              
-              <div className="table-responsive">
-                <table className="table table-sm table-hover mb-0">
-                  <thead style={{ backgroundColor: '#f8f9fa' }}>
-                    <tr>
-                      <th className="border-0 small fw-semibold">Order ID</th>
-                      <th className="border-0 small fw-semibold">Customer</th>
-                      <th className="border-0 small fw-semibold">Service</th>
-                      <th className="border-0 small fw-semibold">Status</th>
-                      <th className="border-0 small fw-semibold text-end">Payment</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {activeOrders.map((order, index) => (
-                      <tr key={index}>
-                        <td className="small fw-medium">{order.id}</td>
-                        <td className="small">{order.customer}</td>
-                        <td className="small">{order.service}</td>
-                        <td>
-                          <Badge 
-                            bg={order.status === 'In Progress' ? 'primary' : 'warning'}
-                            className="small"
-                          >
-                            {order.status}
-                          </Badge>
-                        </td>
-                        <td className="small fw-semibold text-end">₹{order.payment}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
 
-        {/* Recent Transactions */}
-        <Col xs={12} lg={5}>
-          <Card className="border-0 shadow-sm h-100">
-            <Card.Body className="p-3">
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <h6 className="fw-semibold mb-0">Recent Transactions</h6>
-                <Wallet size={18} style={{ color: '#6c757d' }} />
-              </div>
-              
-              <div className="d-flex flex-column gap-2">
-                {transactions.map((txn, index) => (
-                  <div 
-                    key={index}
-                    className="d-flex align-items-center justify-content-between p-2 rounded-2"
-                    style={{ backgroundColor: '#f8f9fa' }}
-                  >
-                    <div className="d-flex align-items-center gap-2">
-                      <div 
-                        className="d-flex align-items-center justify-content-center rounded-circle"
-                        style={{ 
-                          width: 36, 
-                          height: 36, 
-                          backgroundColor: txn.type === 'credit' ? '#D1FAE5' : '#FEE2E2'
-                        }}
-                      >
-                        {txn.type === 'credit' ? 
-                          <ArrowDownRight size={18} style={{ color: '#10B981' }} /> :
-                          <ArrowUpRight size={18} style={{ color: '#EF4444' }} />
-                        }
-                      </div>
-                      <div>
-                        <p className="mb-0 small fw-medium">{txn.description}</p>
-                        <p className="mb-0 small text-muted">{txn.date}</p>
-                      </div>
-                    </div>
-                    <span 
-                      className="small fw-bold"
-                      style={{ color: txn.type === 'credit' ? '#10B981' : '#EF4444' }}
-                    >
-                      {txn.type === 'credit' ? '+' : '-'}₹{txn.amount}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              {recentOrders.length > 0 ? (
+                <div className="table-responsive">
+                  <table className="table table-hover mb-0">
+                    <thead style={{ background: '#f8fafc' }}>
+                      <tr>
+                        <th className="border-0 small fw-bold py-3">Order ID</th>
+                        <th className="border-0 small fw-bold py-3">Service</th>
+                        <th className="border-0 small fw-bold py-3">Date & Time</th>
+                        <th className="border-0 small fw-bold py-3">Status</th>
+                        <th className="border-0 small fw-bold py-3">Payment</th>
+                        <th className="border-0 small fw-bold py-3 text-end">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentOrders.map((order) => (
+                        <tr key={order.orderId}>
+                          <td className="small fw-medium py-3">#{order.orderId}</td>
+                          <td className="py-3">
+                            <div>
+                              <p className="mb-0 small fw-medium">{order.serviceName}</p>
+                              <p className="mb-0 text-muted" style={{ fontSize: '12px' }}>
+                                {order.serviceShortDesc}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="small py-3">
+                            {dayjs(order.orderDateTime).format('MMM DD, YYYY HH:mm')}
+                          </td>
+                          <td className="py-3">
+                            <Badge 
+                              bg={
+                                order.status === 'COMPLETED' ? 'success' : 
+                                order.status === 'INPROGRESS' || order.status === 'IN_PROGRESS' ? 'primary' : 
+                                'warning'
+                              }
+                              style={{ 
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                padding: '4px 8px'
+                              }}
+                            >
+                              {order.status}
+                            </Badge>
+                          </td>
+                          <td className="py-3">
+                            <Badge 
+                              bg={order.paymentStatus === 'SUCCESS' ? 'success' : 'warning'}
+                              style={{ 
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                padding: '4px 8px'
+                              }}
+                            >
+                              {order.paymentStatus}
+                            </Badge>
+                          </td>
+                          <td className="small fw-bold py-3 text-end" style={{ color: '#1e40af' }}>
+                            ₹{order.orderPrice}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-5 text-muted">
+                  <Package size={48} className="mb-3" />
+                  <p>No recent orders</p>
+                </div>
+              )}
             </Card.Body>
           </Card>
         </Col>

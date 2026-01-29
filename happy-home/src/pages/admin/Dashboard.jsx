@@ -1,116 +1,356 @@
-import { useState } from 'react';
-import { Container, Row, Col, Card, Button, ButtonGroup } from 'react-bootstrap';
+import { useState, useEffect } from 'react';
+import { Container, Row, Col, Card, Button, ButtonGroup, Badge } from 'react-bootstrap';
 import { 
   TrendingUp, DollarSign, ShoppingCart, Users, 
-  Package, Store, Calendar, Download
+  Package, Store, Calendar, Download, Activity
 } from 'lucide-react';
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
+import axios from 'axios';
+import dayjs from 'dayjs';
 
 const Dashboard = () => {
   const [timeRange, setTimeRange] = useState('7d');
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    totalOrders: 0,
+    totalConsumers: 0,
+    totalVendors: 0,
+    activeVendors: 0,
+    completedOrders: 0,
+    pendingOrders: 0,
+    inProgressOrders: 0,
+    cancelledOrders: 0,
+    averageOrderValue: 0
+  });
 
-  // Revenue data for line chart
-  const revenueData = [
-    { date: 'Mon', revenue: 4200, orders: 12 },
-    { date: 'Tue', revenue: 3800, orders: 10 },
-    { date: 'Wed', revenue: 5100, orders: 15 },
-    { date: 'Thu', revenue: 4600, orders: 13 },
-    { date: 'Fri', revenue: 6200, orders: 18 },
-    { date: 'Sat', revenue: 7800, orders: 22 },
-    { date: 'Sun', revenue: 6500, orders: 19 },
-  ];
+  // Fetch dashboard data
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch from single admin dashboard endpoint
+      const response = await axios.get('http://localhost:8080/admin/dashboard');
+      
+      console.log('Admin Dashboard Data:', response.data);
+      
+      // Handle actual API response structure
+      const data = response.data;
+      const ordersData = data.orders || [];
+      const usersData = data.users || [];
 
-  // Services performance data for bar chart
-  const servicesData = [
-    { name: 'Plumbing', orders: 45, revenue: 12500 },
-    { name: 'Electrical', orders: 38, revenue: 10200 },
-    { name: 'Cleaning', orders: 52, revenue: 8900 },
-    { name: 'Painting', orders: 28, revenue: 7800 },
-    { name: 'Carpentry', orders: 35, revenue: 9400 },
-    { name: 'AC Repair', orders: 42, revenue: 11200 },
-  ];
+      // Separate users by role
+      const vendors = usersData.filter(user => user.role === 'VENDOR');
+      const consumers = usersData.filter(user => user.role === 'CONSUMER');
 
-  // Order status data for pie chart
-  const orderStatusData = [
-    { name: 'Completed', value: 156, color: '#10B981' },
-    { name: 'In Progress', value: 45, color: '#3B82F6' },
-    { name: 'Pending', value: 23, color: '#F59E0B' },
-    { name: 'Cancelled', value: 8, color: '#EF4444' },
-  ];
+      console.log('📊 Parsed Data:', {
+        totalOrders: ordersData.length,
+        totalVendors: vendors.length,
+        totalConsumers: consumers.length
+      });
 
-  // Vendor performance data
-  const vendorData = [
-    { name: 'Week 1', activeVendors: 32, newVendors: 5 },
-    { name: 'Week 2', activeVendors: 34, newVendors: 3 },
-    { name: 'Week 3', activeVendors: 36, newVendors: 4 },
-    { name: 'Week 4', activeVendors: 38, newVendors: 2 },
-  ];
+      setDashboardData({
+        orders: ordersData,
+        vendors: vendors,
+        consumers: consumers,
+        users: usersData
+      });
 
-  // Summary stats
+      calculateStats(ordersData, vendors, consumers);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      setLoading(false);
+    }
+  };
+
+  // Calculate statistics from data
+  const calculateStats = (orders, vendors, consumers) => {
+    if (!orders || !Array.isArray(orders)) return;
+
+    // Order statistics
+    const completed = orders.filter(o => o.status === 'COMPLETED').length;
+    const pending = orders.filter(o => o.status === 'ASSIGNED').length;
+    const inProgress = orders.filter(o => o.status === 'INPROGRESS' || o.status === 'IN_PROGRESS').length;
+    const cancelled = orders.filter(o => o.status === 'CANCELLED').length;
+
+    // Revenue calculation (from completed orders)
+    const totalRevenue = orders
+      .filter(o => o.status === 'COMPLETED')
+      .reduce((sum, o) => sum + (o.orderPrice || 0), 0);
+
+    // Average order value
+    const avgOrderValue = completed > 0 ? totalRevenue / completed : 0;
+
+    // Active vendors (vendors who have completed at least one order)
+    const activeVendorIds = new Set(
+      orders.filter(o => o.status === 'COMPLETED').map(o => o.vendorId).filter(Boolean)
+    );
+    const activeVendors = activeVendorIds.size;
+
+    console.log('📊 Stats Calculated:', {
+      totalRevenue,
+      totalOrders: orders.length,
+      totalVendors: vendors.length,
+      totalConsumers: consumers.length,
+      activeVendors,
+      completed,
+      pending,
+      inProgress
+    });
+
+    setStats({
+      totalRevenue,
+      totalOrders: orders.length,
+      totalConsumers: consumers.length,  // From users with role CONSUMER
+      totalVendors: vendors.length,      // From users with role VENDOR
+      activeVendors,
+      completedOrders: completed,
+      pendingOrders: pending,
+      inProgressOrders: inProgress,
+      cancelledOrders: cancelled,
+      averageOrderValue: avgOrderValue
+    });
+  };
+
+  // Get revenue trend data (last 7 days)
+  const getRevenueTrend = () => {
+    if (!dashboardData || !dashboardData.orders) return [];
+
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = dayjs().subtract(i, 'day');
+      last7Days.push({
+        date: date.format('ddd'),
+        fullDate: date.format('YYYY-MM-DD'),
+        revenue: 0,
+        orders: 0
+      });
+    }
+
+    dashboardData.orders.forEach(order => {
+      const orderDate = dayjs(order.orderDate || order.orderDateTime).format('YYYY-MM-DD');
+      const dayData = last7Days.find(d => d.fullDate === orderDate);
+      if (dayData && order.status === 'COMPLETED') {
+        dayData.revenue += order.total || order.orderPrice || 0;
+        dayData.orders += 1;
+      }
+    });
+
+    return last7Days;
+  };
+
+  // Get order status distribution
+  const getOrderStatusData = () => {
+    return [
+      { name: 'Completed', value: stats.completedOrders, color: '#10B981' },
+      { name: 'In Progress', value: stats.inProgressOrders, color: '#3B82F6' },
+      { name: 'Pending', value: stats.pendingOrders, color: '#F59E0B' },
+      { name: 'Cancelled', value: stats.cancelledOrders, color: '#EF4444' },
+    ].filter(item => item.value > 0);
+  };
+
+  // Get service performance data
+  const getServicePerformance = () => {
+    if (!dashboardData || !dashboardData.orders) return [];
+
+    const serviceMap = {};
+    
+    dashboardData.orders.forEach(order => {
+      const serviceName = order.serviceName || 'Unknown Service';
+      if (!serviceMap[serviceName]) {
+        serviceMap[serviceName] = {
+          name: serviceName,
+          orders: 0,
+          revenue: 0
+        };
+      }
+      serviceMap[serviceName].orders += 1;
+      if (order.status === 'COMPLETED') {
+        serviceMap[serviceName].revenue += order.total || order.orderPrice || 0;
+      }
+    });
+
+    return Object.values(serviceMap)
+      .sort((a, b) => b.orders - a.orders)
+      .slice(0, 6);
+  };
+
+  // Get top vendors
+  const getTopVendors = () => {
+    if (!dashboardData || !dashboardData.orders) return [];
+
+    const vendorMap = {};
+    
+    dashboardData.orders.forEach(order => {
+      const vendorId = order.vendorId;
+      const vendorName = order.vendorFirstName && order.vendorLastName 
+        ? `${order.vendorFirstName} ${order.vendorLastName}`
+        : `Vendor ${vendorId}`;
+      
+      if (!vendorMap[vendorId]) {
+        vendorMap[vendorId] = {
+          id: vendorId,
+          name: vendorName,
+          orders: 0,
+          revenue: 0,
+          rating: order.vendorRating || 0
+        };
+      }
+      vendorMap[vendorId].orders += 1;
+      if (order.status === 'COMPLETED') {
+        vendorMap[vendorId].revenue += order.total || order.orderPrice || 0;
+      }
+    });
+
+    return Object.values(vendorMap)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5);
+  };
+
+  // Get payment status summary
+  const getPaymentStatusData = () => {
+    if (!dashboardData || !dashboardData.orders) return [];
+
+    const paymentMap = {
+      SUCCESS: 0,
+      PENDING: 0,
+      FAILED: 0
+    };
+
+    dashboardData.orders.forEach(order => {
+      const status = order.paymentStatus || 'PENDING';
+      if (paymentMap.hasOwnProperty(status)) {
+        paymentMap[status] += 1;
+      }
+    });
+
+    return [
+      { name: 'Success', value: paymentMap.SUCCESS, color: '#10B981' },
+      { name: 'Pending', value: paymentMap.PENDING, color: '#F59E0B' },
+      { name: 'Failed', value: paymentMap.FAILED, color: '#EF4444' }
+    ].filter(item => item.value > 0);
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <Container fluid className="p-4" style={{ minHeight: '100vh', background: '#f8fafc' }}>
+        <div className="text-center py-5">
+          <div className="spinner-border" style={{ color: '#1e40af' }} role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3 text-muted">Loading dashboard data...</p>
+        </div>
+      </Container>
+    );
+  }
+
+  const revenueTrend = getRevenueTrend();
+  const orderStatusData = getOrderStatusData();
+  const servicePerformance = getServicePerformance();
+  const topVendors = getTopVendors();
+  const paymentStatusData = getPaymentStatusData();
+
   const summaryStats = [
     { 
       label: 'Total Revenue', 
-      value: '₹38,420', 
+      value: `₹${stats.totalRevenue.toLocaleString('en-IN')}`, 
       change: '+18.2%',
       icon: DollarSign, 
-      color: '#10B981' 
+      color: '#10B981',
+      bgColor: '#d1fae5',
+      borderColor: '#6ee7b7'
     },
     { 
       label: 'Total Orders', 
-      value: '232', 
-      change: '+12.5%',
+      value: stats.totalOrders.toString(), 
+      change: `${stats.completedOrders} completed`,
       icon: ShoppingCart, 
-      color: '#3B82F6' 
+      color: '#1e40af',
+      bgColor: '#dbeafe',
+      borderColor: '#bfdbfe'
     },
     { 
-      label: 'Active Users', 
-      value: '156', 
-      change: '+8.1%',
+      label: 'Total Consumers', 
+      value: stats.totalConsumers.toString(), 
+      change: `${stats.activeVendors} active vendors`,
       icon: Users, 
-      color: '#8B5CF6' 
+      color: '#8B5CF6',
+      bgColor: '#ede9fe',
+      borderColor: '#c4b5fd'
     },
     { 
       label: 'Avg Order Value', 
-      value: '₹1,656', 
-      change: '+4.3%',
+      value: `₹${Math.round(stats.averageOrderValue).toLocaleString('en-IN')}`, 
+      change: `${stats.totalVendors} vendors`,
       icon: TrendingUp, 
-      color: '#F59E0B' 
+      color: '#F59E0B',
+      bgColor: '#fef3c7',
+      borderColor: '#fde68a'
     },
   ];
 
   return (
-    <Container fluid className="p-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+    <Container fluid className="p-4" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h2 className="fw-bold mb-1" style={{ color: '#000000' }}>Analytics Dashboard</h2>
-          <p className="text-muted small mb-0">Comprehensive business insights and metrics</p>
+          <h2 className="fw-bold mb-1" style={{ color: '#1e293b' }}>Admin Dashboard</h2>
+          <p className="text-muted mb-0">Comprehensive business insights and metrics</p>
         </div>
         <div className="d-flex gap-2 align-items-center">
           <ButtonGroup size="sm">
             <Button 
-              variant={timeRange === '7d' ? 'primary' : 'outline-secondary'}
+              style={{
+                background: timeRange === '7d' ? '#1e40af' : 'transparent',
+                color: timeRange === '7d' ? '#ffffff' : '#64748b',
+                border: `2px solid ${timeRange === '7d' ? '#1e40af' : '#e2e8f0'}`,
+                fontWeight: 600
+              }}
               onClick={() => setTimeRange('7d')}
             >
               7 Days
             </Button>
             <Button 
-              variant={timeRange === '30d' ? 'primary' : 'outline-secondary'}
+              style={{
+                background: timeRange === '30d' ? '#1e40af' : 'transparent',
+                color: timeRange === '30d' ? '#ffffff' : '#64748b',
+                border: `2px solid ${timeRange === '30d' ? '#1e40af' : '#e2e8f0'}`,
+                fontWeight: 600
+              }}
               onClick={() => setTimeRange('30d')}
             >
               30 Days
             </Button>
             <Button 
-              variant={timeRange === '90d' ? 'primary' : 'outline-secondary'}
+              style={{
+                background: timeRange === '90d' ? '#1e40af' : 'transparent',
+                color: timeRange === '90d' ? '#ffffff' : '#64748b',
+                border: `2px solid ${timeRange === '90d' ? '#1e40af' : '#e2e8f0'}`,
+                fontWeight: 600
+              }}
               onClick={() => setTimeRange('90d')}
             >
               90 Days
             </Button>
           </ButtonGroup>
-          <Button variant="outline-primary" size="sm">
+          <Button 
+            style={{
+              background: 'transparent',
+              color: '#1e40af',
+              border: '2px solid #1e40af',
+              fontWeight: 600
+            }}
+            size="sm"
+          >
             <Download size={16} className="me-1" />
             Export
           </Button>
@@ -121,33 +361,33 @@ const Dashboard = () => {
       <Row className="g-3 mb-4">
         {summaryStats.map((stat, index) => (
           <Col key={index} xs={12} sm={6} lg={3}>
-            <Card className="border-0 shadow-sm h-100">
+            <Card 
+              className="border-0 shadow-sm h-100"
+              style={{ borderRadius: '12px' }}
+            >
               <Card.Body className="p-3">
                 <div className="d-flex justify-content-between align-items-start mb-2">
                   <div 
-                    className="d-flex align-items-center justify-content-center rounded-2"
+                    className="d-flex align-items-center justify-content-center"
                     style={{ 
-                      width: 44, 
-                      height: 44, 
-                      backgroundColor: `${stat.color}20`
+                      width: 48, 
+                      height: 48, 
+                      backgroundColor: stat.bgColor,
+                      borderRadius: '10px',
+                      border: `2px solid ${stat.borderColor}`
                     }}
                   >
-                    <stat.icon size={22} style={{ color: stat.color }} />
+                    <stat.icon size={24} style={{ color: stat.color }} />
                   </div>
-                  <span 
-                    className="badge small fw-semibold"
-                    style={{ 
-                      backgroundColor: '#D1FAE5',
-                      color: '#10B981'
-                    }}
-                  >
-                    {stat.change}
-                  </span>
+                  <Activity size={20} style={{ color: stat.color }} />
                 </div>
-                <h3 className="fw-bold mb-1" style={{ color: '#000000', fontSize: '26px' }}>
+                <h3 className="fw-bold mb-1" style={{ color: '#1e293b', fontSize: '28px' }}>
                   {stat.value}
                 </h3>
-                <p className="text-muted small mb-0">{stat.label}</p>
+                <p className="text-muted small mb-1">{stat.label}</p>
+                <span className="small" style={{ color: stat.color, fontWeight: 600 }}>
+                  {stat.change}
+                </span>
               </Card.Body>
             </Card>
           </Col>
@@ -157,159 +397,355 @@ const Dashboard = () => {
       <Row className="g-4 mb-4">
         {/* Revenue Trend */}
         <Col xs={12} lg={8}>
-          <Card className="border-0 shadow-sm h-100">
+          <Card className="border-0 shadow-sm h-100" style={{ borderRadius: '12px' }}>
             <Card.Body className="p-4">
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                  <h5 className="fw-semibold mb-1">Revenue & Orders Trend</h5>
+                  <h5 className="fw-bold mb-1" style={{ color: '#1e293b' }}>
+                    Revenue & Orders Trend
+                  </h5>
                   <p className="text-muted small mb-0">Daily performance over the last 7 days</p>
                 </div>
-                <Calendar size={20} style={{ color: '#6c757d' }} />
+                <Calendar size={20} style={{ color: '#64748b' }} />
               </div>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={revenueData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                  <XAxis dataKey="date" stroke="#6c757d" style={{ fontSize: '12px' }} />
-                  <YAxis stroke="#6c757d" style={{ fontSize: '12px' }} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#ffffff', 
-                      border: '1px solid #e0e0e0',
-                      borderRadius: '8px'
-                    }}
-                  />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="revenue" 
-                    stroke="#10B981" 
-                    strokeWidth={3}
-                    dot={{ fill: '#10B981', r: 5 }}
-                    activeDot={{ r: 7 }}
-                    name="Revenue (₹)"
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="orders" 
-                    stroke="#3B82F6" 
-                    strokeWidth={3}
-                    dot={{ fill: '#3B82F6', r: 5 }}
-                    activeDot={{ r: 7 }}
-                    name="Orders"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              
+              {revenueTrend.length > 0 ? (
+                <ResponsiveContainer width="100%" height={280}>
+                  <LineChart data={revenueTrend}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="#64748b" 
+                      style={{ fontSize: '12px' }} 
+                    />
+                    <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#ffffff', 
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="revenue" 
+                      stroke="#10B981" 
+                      strokeWidth={3}
+                      dot={{ fill: '#10B981', r: 5 }}
+                      activeDot={{ r: 7 }}
+                      name="Revenue (₹)"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="orders" 
+                      stroke="#1e40af" 
+                      strokeWidth={3}
+                      dot={{ fill: '#1e40af', r: 5 }}
+                      activeDot={{ r: 7 }}
+                      name="Orders"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="text-center py-5 text-muted">
+                  <Package size={48} className="mb-3" />
+                  <p>No revenue data available</p>
+                </div>
+              )}
             </Card.Body>
           </Card>
         </Col>
 
         {/* Order Status Distribution */}
         <Col xs={12} lg={4}>
-          <Card className="border-0 shadow-sm h-100">
+          <Card className="border-0 shadow-sm h-100" style={{ borderRadius: '12px' }}>
             <Card.Body className="p-4">
-              <h5 className="fw-semibold mb-3">Order Status</h5>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={orderStatusData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={90}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {orderStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+              <h5 className="fw-bold mb-3" style={{ color: '#1e293b' }}>Order Status</h5>
+              
+              {orderStatusData.length > 0 ? (
+                <>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie
+                        data={orderStatusData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {orderStatusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="mt-3">
+                    {orderStatusData.map((item, index) => (
+                      <div key={index} className="d-flex justify-content-between align-items-center mb-2">
+                        <div className="d-flex align-items-center gap-2">
+                          <div 
+                            style={{ 
+                              width: 12, 
+                              height: 12, 
+                              backgroundColor: item.color,
+                              borderRadius: '3px'
+                            }}
+                          />
+                          <span className="small">{item.name}</span>
+                        </div>
+                        <span className="small fw-bold">{item.value}</span>
+                      </div>
                     ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="mt-3">
-                {orderStatusData.map((item, index) => (
-                  <div key={index} className="d-flex justify-content-between align-items-center mb-2">
-                    <div className="d-flex align-items-center gap-2">
-                      <div 
-                        style={{ 
-                          width: 12, 
-                          height: 12, 
-                          backgroundColor: item.color,
-                          borderRadius: '2px'
-                        }}
-                      />
-                      <span className="small">{item.name}</span>
-                    </div>
-                    <span className="small fw-semibold">{item.value}</span>
                   </div>
-                ))}
-              </div>
+                </>
+              ) : (
+                <div className="text-center py-4 text-muted">
+                  <p className="small">No order data available</p>
+                </div>
+              )}
+
+              {/* Payment Status */}
+              {paymentStatusData.length > 0 && (
+                <div className="mt-4 pt-3" style={{ borderTop: '1px solid #e2e8f0' }}>
+                  <h6 className="fw-bold mb-3 small" style={{ color: '#1e293b' }}>
+                    Payment Status
+                  </h6>
+                  {paymentStatusData.map((item, index) => (
+                    <div key={index} className="d-flex justify-content-between align-items-center mb-2">
+                      <div className="d-flex align-items-center gap-2">
+                        <div 
+                          style={{ 
+                            width: 12, 
+                            height: 12, 
+                            backgroundColor: item.color,
+                            borderRadius: '3px'
+                          }}
+                        />
+                        <span className="small">{item.name}</span>
+                      </div>
+                      <span className="small fw-bold">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </Card.Body>
           </Card>
         </Col>
       </Row>
 
-      <Row className="g-4">
+      <Row className="g-4 mb-4">
         {/* Service Performance */}
         <Col xs={12} lg={7}>
-          <Card className="border-0 shadow-sm h-100">
+          <Card className="border-0 shadow-sm h-100" style={{ borderRadius: '12px' }}>
             <Card.Body className="p-4">
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                  <h5 className="fw-semibold mb-1">Service Performance</h5>
+                  <h5 className="fw-bold mb-1" style={{ color: '#1e293b' }}>
+                    Service Performance
+                  </h5>
                   <p className="text-muted small mb-0">Orders by service category</p>
                 </div>
-                <Package size={20} style={{ color: '#6c757d' }} />
+                <Package size={20} style={{ color: '#64748b' }} />
               </div>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={servicesData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                  <XAxis dataKey="name" stroke="#6c757d" style={{ fontSize: '11px' }} />
-                  <YAxis stroke="#6c757d" style={{ fontSize: '12px' }} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#ffffff', 
-                      border: '1px solid #e0e0e0',
-                      borderRadius: '8px'
-                    }}
-                  />
-                  <Legend />
-                  <Bar dataKey="orders" fill="#3B82F6" name="Orders" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              
+              {servicePerformance.length > 0 ? (
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={servicePerformance}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis 
+                      dataKey="name" 
+                      stroke="#64748b" 
+                      style={{ fontSize: '11px' }}
+                      angle={-15}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#ffffff', 
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <Legend />
+                    <Bar 
+                      dataKey="orders" 
+                      fill="#1e40af" 
+                      name="Orders" 
+                      radius={[8, 8, 0, 0]} 
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="text-center py-5 text-muted">
+                  <Package size={48} className="mb-3" />
+                  <p>No service data available</p>
+                </div>
+              )}
             </Card.Body>
           </Card>
         </Col>
 
-        {/* Vendor Growth */}
+        {/* Top Vendors */}
         <Col xs={12} lg={5}>
-          <Card className="border-0 shadow-sm h-100">
+          <Card className="border-0 shadow-sm h-100" style={{ borderRadius: '12px' }}>
             <Card.Body className="p-4">
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                  <h5 className="fw-semibold mb-1">Vendor Growth</h5>
-                  <p className="text-muted small mb-0">Monthly vendor statistics</p>
+                  <h5 className="fw-bold mb-1" style={{ color: '#1e293b' }}>
+                    Top Performing Vendors
+                  </h5>
+                  <p className="text-muted small mb-0">By total revenue</p>
                 </div>
-                <Store size={20} style={{ color: '#6c757d' }} />
+                <Store size={20} style={{ color: '#64748b' }} />
               </div>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={vendorData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                  <XAxis dataKey="name" stroke="#6c757d" style={{ fontSize: '12px' }} />
-                  <YAxis stroke="#6c757d" style={{ fontSize: '12px' }} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#ffffff', 
-                      border: '1px solid #e0e0e0',
-                      borderRadius: '8px'
-                    }}
-                  />
-                  <Legend />
-                  <Bar dataKey="activeVendors" fill="#8B5CF6" name="Active Vendors" radius={[8, 8, 0, 0]} />
-                  <Bar dataKey="newVendors" fill="#10B981" name="New Vendors" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              
+              {topVendors.length > 0 ? (
+                <div className="d-flex flex-column gap-3">
+                  {topVendors.map((vendor, index) => (
+                    <div 
+                      key={vendor.id}
+                      className="d-flex align-items-center justify-content-between p-3"
+                      style={{ 
+                        background: '#f8fafc',
+                        borderRadius: '8px',
+                        border: '1px solid #e2e8f0'
+                      }}
+                    >
+                      <div className="d-flex align-items-center gap-3">
+                        <div 
+                          className="d-flex align-items-center justify-content-center fw-bold"
+                          style={{ 
+                            width: 36, 
+                            height: 36, 
+                            background: index === 0 ? '#fef3c7' : '#dbeafe',
+                            color: index === 0 ? '#F59E0B' : '#1e40af',
+                            borderRadius: '8px',
+                            fontSize: '14px'
+                          }}
+                        >
+                          #{index + 1}
+                        </div>
+                        <div>
+                          <p className="mb-0 fw-medium small">{vendor.name}</p>
+                          <p className="mb-0 text-muted" style={{ fontSize: '12px' }}>
+                            {vendor.orders} orders
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-end">
+                        <p className="mb-0 fw-bold small" style={{ color: '#10B981' }}>
+                          ₹{vendor.revenue.toLocaleString('en-IN')}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-5 text-muted">
+                  <Store size={48} className="mb-3" />
+                  <p>No vendor data available</p>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Quick Stats Summary */}
+      <Row>
+        <Col xs={12}>
+          <Card className="border-0 shadow-sm" style={{ borderRadius: '12px' }}>
+            <Card.Body className="p-4">
+              <h5 className="fw-bold mb-4" style={{ color: '#1e293b' }}>Platform Overview</h5>
+              <Row className="g-4">
+                <Col xs={6} md={3}>
+                  <div className="text-center">
+                    <div 
+                      className="d-inline-flex align-items-center justify-content-center mb-2"
+                      style={{ 
+                        width: 56, 
+                        height: 56, 
+                        background: '#dbeafe',
+                        borderRadius: '12px',
+                        border: '2px solid #bfdbfe'
+                      }}
+                    >
+                      <ShoppingCart size={28} color="#1e40af" />
+                    </div>
+                    <h4 className="fw-bold mb-1" style={{ color: '#1e293b' }}>
+                      {stats.completedOrders}
+                    </h4>
+                    <p className="text-muted small mb-0">Completed Orders</p>
+                  </div>
+                </Col>
+                <Col xs={6} md={3}>
+                  <div className="text-center">
+                    <div 
+                      className="d-inline-flex align-items-center justify-content-center mb-2"
+                      style={{ 
+                        width: 56, 
+                        height: 56, 
+                        background: '#fef3c7',
+                        borderRadius: '12px',
+                        border: '2px solid #fde68a'
+                      }}
+                    >
+                      <Package size={28} color="#F59E0B" />
+                    </div>
+                    <h4 className="fw-bold mb-1" style={{ color: '#1e293b' }}>
+                      {stats.inProgressOrders}
+                    </h4>
+                    <p className="text-muted small mb-0">In Progress</p>
+                  </div>
+                </Col>
+                <Col xs={6} md={3}>
+                  <div className="text-center">
+                    <div 
+                      className="d-inline-flex align-items-center justify-content-center mb-2"
+                      style={{ 
+                        width: 56, 
+                        height: 56, 
+                        background: '#ede9fe',
+                        borderRadius: '12px',
+                        border: '2px solid #c4b5fd'
+                      }}
+                    >
+                      <Store size={28} color="#8B5CF6" />
+                    </div>
+                    <h4 className="fw-bold mb-1" style={{ color: '#1e293b' }}>
+                      {stats.activeVendors}
+                    </h4>
+                    <p className="text-muted small mb-0">Active Vendors</p>
+                  </div>
+                </Col>
+                <Col xs={6} md={3}>
+                  <div className="text-center">
+                    <div 
+                      className="d-inline-flex align-items-center justify-content-center mb-2"
+                      style={{ 
+                        width: 56, 
+                        height: 56, 
+                        background: '#d1fae5',
+                        borderRadius: '12px',
+                        border: '2px solid #6ee7b7'
+                      }}
+                    >
+                      <Users size={28} color="#10B981" />
+                    </div>
+                    <h4 className="fw-bold mb-1" style={{ color: '#1e293b' }}>
+                      {stats.totalConsumers}
+                    </h4>
+                    <p className="text-muted small mb-0">Total Consumers</p>
+                  </div>
+                </Col>
+              </Row>
             </Card.Body>
           </Card>
         </Col>

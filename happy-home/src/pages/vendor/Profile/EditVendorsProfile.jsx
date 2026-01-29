@@ -11,8 +11,8 @@ const EditVendorProfile = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Vendor ID - You can get this from auth context or route params
-  const vendorId = 1; // Replace with actual vendor ID
-  const DEFAULT_PROFILE_PIC = "https://commons.wikimedia.org/wiki/File:Twitter_default_profile_400x400.png";
+  const vendorId = JSON.parse(sessionStorage.getItem('user')).userId;
+  const DEFAULT_PROFILE_PIC = 'https://via.placeholder.com/150';
 
   // Initial state structure
   const [profileData, setProfileData] = useState({
@@ -71,14 +71,14 @@ const EditVendorProfile = () => {
       
       // Fetch all vendor data in parallel
       const [profileRes, addressRes, bankingRes] = await Promise.all([
-        axios.get(`http://localhost:8080/vendor/1/profile`),
-        axios.get(`http://localhost:8080/vendor/1/address`),
-        axios.get(`http://localhost:8080/vendor/1/banking`)
+        axios.get(`http://localhost:8080/vendor/${vendorId}/profile`),
+        axios.get(`http://localhost:8080/vendor/${vendorId}/address`),
+        axios.get(`http://localhost:8080/vendor/${vendorId}/banking`)
       ]);
 
       const profile = profileRes.data;
       const address = addressRes.data;
-      const banking = bankingRes.data;
+      const banking = bankingRes.data || {};
 
       console.log(profileRes);
       console.log(addressRes);

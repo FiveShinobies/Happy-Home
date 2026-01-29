@@ -20,8 +20,7 @@ export default function OrderHistory() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("ALL");
 
-  const vendorId = 1; // Replace with actual logged-in vendor ID
-
+  const vendorId = JSON.parse(sessionStorage.getItem('user')).userId;
   // Fetch orders from backend
   useEffect(() => {
     const fetchOrders = async () => {
