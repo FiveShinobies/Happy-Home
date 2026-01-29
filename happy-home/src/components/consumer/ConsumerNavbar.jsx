@@ -43,6 +43,7 @@ const ConsumerNavbar = () => {
           <span style={styles.brandText}>HappyHome</span>
         </Link>
 
+
         {/* Desktop Navigation */}
         <div style={styles.desktopNav}>
           {navItems.map((item) => {

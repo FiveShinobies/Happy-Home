@@ -1,11 +1,20 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Package, Users, ShoppingCart, UserCircle, LayoutDashboard, Menu, X , LogOut  } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const AdminNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-
+  const navigate = useNavigate();
+  const handleLogout = () => {
+      // Clear user session or token here
+      console.log('User logged out');
+      sessionStorage.clear();
+      toast.success('Logged out successfully');
+      navigate('/');
+    }
   const navItems = [
     { path: '/admin-home', label: 'Home', icon: Home },
     { path: '/admin-home/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -13,7 +22,7 @@ const AdminNavbar = () => {
     { path: '/admin-home/add-service', label: 'Add Service', icon: Package },
     { path: '/admin-home/all-orders', label: 'Orders', icon: ShoppingCart },
     { path: '/admin-home/admin-panel', label: 'All Users', icon: UserCircle },
-    { path: '/', label: 'logout', icon: LogOut  },
+    { label: 'logout', icon: LogOut , onClick : handleLogout },
 
     // { path: '/admin-home/all-vendors', label: 'Vendors', icon: Users },
     // { path: '/admin-home/all-consumers', label: 'Consumers', icon: UserCircle },
@@ -36,7 +45,13 @@ const AdminNavbar = () => {
             return (
               <Link
                 key={item.path}
-                to={item.path}
+                to={item.path || '#'}
+                onClick={(e) => {
+                  if (item.onClick) {
+                    e.preventDefault();
+                    item.onClick();
+                  }
+                }} 
                 style={{
                   ...styles.navLink,
                   ...(active ? styles.navLinkActive : {}),

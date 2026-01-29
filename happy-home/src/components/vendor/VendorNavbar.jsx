@@ -1,10 +1,19 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, LayoutDashboard, Briefcase, History, User, Menu, X , LogOut} from 'lucide-react';
-
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 const VendorNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const handleLogout = () => {
+      // Clear user session or token here
+      console.log('User logged out');
+      sessionStorage.clear();
+      toast.success('Logged out successfully');
+      navigate('/');
+    }
 
   const navItems = [
     { path: '/vendor-home', label: 'Home', icon: Home },
@@ -13,7 +22,7 @@ const VendorNavbar = () => {
     { path: '/vendor-home/view-work-order-details', label: 'Orders', icon: Briefcase },
     { path: '/vendor-home/order-history', label: 'Order History', icon: History },
     { path: '/vendor-home/vendor-profile', label: 'Profile', icon: User },
-    { path: '/', label: 'logout', icon: LogOut }
+    { label: 'logout', icon: LogOut , onClick: handleLogout },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -34,7 +43,13 @@ const VendorNavbar = () => {
             return (
               <Link
                 key={item.path}
-                to={item.path}
+                to={item.path || '#'}
+                onClick={(e) => {
+                  if (item.onClick) {
+                    e.preventDefault();
+                    item.onClick();
+                  }
+                }}
                 style={{
                   ...styles.navLink,
                   ...(active ? styles.navLinkActive : {}),
