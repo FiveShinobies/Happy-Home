@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import {
   User,
   Calendar,
@@ -10,27 +11,23 @@ import {
   Briefcase,
   Star
 } from 'lucide-react';
-import { useParams } from "react-router-dom";
+import { get } from "react-hook-form";
+import axios from "axios";
 
 export default function OrderDetails() {
-
+  const { orderId } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Get orderId from URL (for demo, using a fixed ID)
-  const { orderId } = useParams(); // You can get this from URL params in your actual app
+
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/order/${orderId}`);
-
-        if (!response.ok) {
-          throw new Error('Order not found');
-        }
-
-        const data = await response.json();
+        // const response = await axios.get(`http://localhost:8080/order/${orderId}`);
+        const response = await axios.get(`http://localhost:8080/order/${orderId}`);
+        const data = await response.data;
         setOrder(data);
         setLoading(false);
       } catch (err) {
