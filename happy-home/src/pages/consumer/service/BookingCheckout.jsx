@@ -3,6 +3,7 @@ import { MapPin, User, Phone, Mail, Calendar, Clock, Home, CheckCircle, Lock, Pl
 import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import { useNavigate, useLocation, useParams } from "react-router-dom";
+import LoginRequired from './LoginRequired';
 
 const BookingCheckout = () => {
   const [consumerData, setConsumerData] = useState(null);
@@ -12,14 +13,24 @@ const BookingCheckout = () => {
   const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
-  const location = useLocation();
-  
+  const isLoggedIn = sessionStorage.getItem('user') !== null;
+  if (!isLoggedIn) {
+     return (
+    <LoginRequired
+      onLogin={() =>
+        navigate('/login')
+      }
+    />
+  );
+    }
+ 
   // Get serviceId from URL params or location state
   const { serviceId } = useParams();
   const cId = JSON.parse(sessionStorage.getItem('user')).userId;
-
+ 
   // Fetch consumer and service data on component mount
   useEffect(() => {
+
     const fetchBookingData = async () => {
       try {
         if (!serviceId) {

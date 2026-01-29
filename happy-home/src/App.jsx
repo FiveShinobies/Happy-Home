@@ -1,4 +1,4 @@
-import { Routes , Route } from 'react-router-dom'
+import { Routes , Route , Navigate } from 'react-router-dom'
 import AdminHome from './pages/admin/AdminHome';
 import Dashboard from './pages/admin/Dashboard';
 import ServiceListing from './pages/admin/ServiceListing';
@@ -52,7 +52,7 @@ function App() {
     <div>
       <Routes>
 
-        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
         {/* adminroutes */}
@@ -84,9 +84,12 @@ function App() {
 
 
 
-        <Route path='consumer-home' element={<Home />} /> 
+        <Route path='/' element={<Home />} /> 
         {/* consumer routes */}
         <Route path="/consumer-home" element={<ConsumerHome />}>
+  
+          <Route index element={<Navigate to="/" replace />} />
+  
           <Route path='service-listing' element={<ConsumerServiceListing />} />  
           <Route path='service-details/:id' element={<ServiceDetails />} />
 {/* -------------------------------------------------------------------------------------- */}
