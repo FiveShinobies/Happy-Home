@@ -4,9 +4,9 @@ import { Star, MapPin, Clock, Package, ArrowLeft, Phone, CheckCircle, Trash2Icon
 import { Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
-import service1 from "../../../assets/service1.jpg.jpeg";
-import service2 from "../../../assets/service2.jpg.jpeg";
-import service3 from "../../../assets/service3.jpg.jpeg";
+import service1 from "../../../assets/service1.jpg";
+import service2 from "../../../assets/service2.jpg";
+import service3 from "../../../assets/service3.jpg";
 import service4 from "../../../assets/service4.avif";
 import { toast } from "react-toastify";
 

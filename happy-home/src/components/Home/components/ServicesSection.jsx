@@ -1,6 +1,6 @@
-import serviceHomeCleaning from "../../../assets/service-home-cleaning.jpg";
-import serviceDeepCleaning from "../../../assets/service-deep-cleaning.jpg";
-import serviceMoveOut from "../../../assets/service-move-out.jpg";
+import serviceHomeCleaning from "../../../assets/service3.jpg.jpeg";
+// import serviceDeepCleaning from "../../../assets/service-deep-cleaning.jpg";
+// import serviceMoveOut from "../../../assets/service-move-out.jpg";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
@@ -27,7 +27,7 @@ const ServicesSection = () => {
         const response = await axios.get('http://localhost:8080/services');
         // Limit to only 3 services
         setServices(response.data.slice(4, 7));
-        // console.log('Fetched services:', response.data);
+        console.log('Fetched services:', response.data);
       } catch (error) {
         console.error('Error fetching services:', error);
       }
@@ -73,17 +73,10 @@ const ServicesSection = () => {
 
                   {/* Content */}
                   <div className="card-body p-4">
-                    <div className="d-flex justify-content-between align-items-start mb-3">
-                      <h5 className="card-title fw-bold mb-0">{service.serviceName}</h5>
-                      {service.category && (
-                        <span className="badge bg-primary bg-opacity-10 text-primary" style={{ fontSize: '0.7rem', padding: '0.35rem 0.65rem' }}>
-                          {service.category}
-                        </span>
-                      )}
-                    </div>
+                    <h5 className="card-title fw-bold mb-3">{service.serviceName}</h5>
                     <p className="card-text text-secondary mb-3">{service.shortDesc}</p>
 
-                    <Link to={`/consumer-home/service-details/${service.serviceID}`} className="text-primary fw-semibold text-decoration-none d-inline-flex align-items-center gap-2">
+                    <Link href="#" className="text-primary fw-semibold text-decoration-none d-inline-flex align-items-center gap-2">
                       Learn More
                       <i className="bi bi-arrow-right"></i>
                     </Link>

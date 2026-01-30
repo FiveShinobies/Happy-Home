@@ -3,8 +3,6 @@ import { ArrowLeft, Save, X, CheckCircle } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 
-
-
 const AddService = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -66,7 +64,7 @@ const AddService = () => {
       newErrors.price = 'Price must be greater than 0';
     }
     if (!formData.category) newErrors.category = 'Category is required';
-    
+
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -406,7 +404,7 @@ const AddService = () => {
       <div style={styles.header}>
         <div style={styles.container}>
           <div style={styles.headerContent}>
-            <h2 style={styles.title}>Edit Service</h2>
+            <h2 style={styles.title}>Add New Service</h2>
             <button
               style={styles.backBtn}
               onClick={handleCancel}
