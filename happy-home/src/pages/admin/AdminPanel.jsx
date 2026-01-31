@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import Header from './shared/Header';
 import TabNavigation from './shared/TabNavigation';
@@ -13,7 +13,7 @@ import VendorDetails from './vendor/VendorDetails';
 import VendorOrders from './vendor/VendorOrders';
 import VendorOrderDetails from './vendor/VendorOrderDetails';
 
-import mockData from './data/mockData';
+import adminService from './consumer/adminService';
 
 const varOcg = true; // __define-ocg__
 
@@ -23,33 +23,169 @@ const AdminPanel = () => {
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [view, setView] = useState('list');
 
+  // State for API data
+  const [consumers, setConsumers] = useState([]);
+  const [vendors, setVendors] = useState([]);
+  const [consumerOrders, setConsumerOrders] = useState([]);
+  const [vendorOrders, setVendorOrders] = useState([]);
+  const [orderDetails, setOrderDetails] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Fetch consumers on component mount
+  useEffect(() => {
+    fetchConsumers();
+    fetchVendors();
+  }, []);
+
+  const fetchConsumers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminService.getAllConsumers();
+      setConsumers(data);
+    } catch (err) {
+      setError('Failed to load consumers');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchVendors = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminService.getAllVendors();
+      setVendors(data);
+    } catch (err) {
+      setError('Failed to load vendors');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchConsumerOrders = async (consumerId) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminService.getConsumerOrders(consumerId);
+      setConsumerOrders(data);
+    } catch (err) {
+      setError('Failed to load consumer orders');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchVendorOrders = async (vendorId) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminService.getVendorOrders(vendorId);
+      setVendorOrders(data);
+    } catch (err) {
+      setError('Failed to load vendor orders');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchOrderDetails = async (orderId) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminService.getOrderDetails(orderId);
+      setOrderDetails(data);
+    } catch (err) {
+      setError('Failed to load order details');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setView('list');
     setSelectedConsumer(null);
     setSelectedVendor(null);
+    setError(null);
   };
 
-  const handleViewDetails = (item) => {
-    if (activeTab === 'consumers') {
-      setSelectedConsumer(item);
-    } else {
-      setSelectedVendor(item);
+  const handleViewDetails = async (item) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      if (activeTab === 'consumers') {
+        // Fetch full consumer details
+        const consumerDetails = await adminService.getConsumerDetails(item.consumerId);
+        // CRITICAL FIX: Ensure consumerId is preserved in the details object
+        setSelectedConsumer({
+          ...consumerDetails,
+          consumerId: item.consumerId // Preserve the original consumerId
+        });
+      } else {
+        // Fetch full vendor details
+        const vendorDetails = await adminService.getVendorDetails(item.vendorId);
+        // CRITICAL FIX: Ensure vendorId is preserved in the details object
+        setSelectedVendor({
+          ...vendorDetails,
+          vendorId: item.vendorId // Preserve the original vendorId
+        });
+      }
+
+      setView('details');
+    } catch (err) {
+      setError(`Failed to load ${activeTab === 'consumers' ? 'consumer' : 'vendor'} details`);
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-    setView('details');
   };
 
-  const handleViewOrders = (item) => {
-    if (activeTab === 'consumers') {
-      setSelectedConsumer(item);
-    } else {
-      setSelectedVendor(item);
+  const handleViewOrders = async (item) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      if (activeTab === 'consumers') {
+        // Use the existing selectedConsumer if available, otherwise use the passed item
+        const consumer = item.consumerId ? item : selectedConsumer;
+        setSelectedConsumer(consumer);
+        await fetchConsumerOrders(consumer.consumerId);
+      } else {
+        // Use the existing selectedVendor if available, otherwise use the passed item
+        const vendor = item.vendorId ? item : selectedVendor;
+        setSelectedVendor(vendor);
+        await fetchVendorOrders(vendor.vendorId);
+      }
+
+      setView('orders');
+    } catch (err) {
+      setError(`Failed to load ${activeTab === 'consumers' ? 'consumer' : 'vendor'} orders`);
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-    setView('orders');
   };
 
-  const handleViewOrderDetails = () => {
-    setView('orderDetails');
+  const handleViewOrderDetails = async (orderId) => {
+    try {
+      setLoading(true);
+      setError(null);
+      await fetchOrderDetails(orderId);
+      setView('orderDetails');
+    } catch (err) {
+      setError('Failed to load order details');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -60,10 +196,10 @@ const AdminPanel = () => {
       setSelectedConsumer(null);
       setSelectedVendor(null);
     }
+    setError(null);
   };
 
-  const currentItems =
-    activeTab === 'consumers' ? mockData.consumers : mockData.vendors;
+  const currentItems = activeTab === 'consumers' ? consumers : vendors;
 
   return (
     <div className="min-vh-100 bg-light">
@@ -72,16 +208,39 @@ const AdminPanel = () => {
       <div className="container py-4">
         <TabNavigation activeTab={activeTab} onTabChange={handleTabChange} />
 
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-5">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="alert alert-danger" role="alert">
+            {error}
+            <button
+              type="button"
+              className="btn-close float-end"
+              onClick={() => setError(null)}
+              aria-label="Close"
+            ></button>
+          </div>
+        )}
+
         {/* CONSUMER VIEWS */}
-        {activeTab === 'consumers' && view === 'list' && (
+        {!loading && activeTab === 'consumers' && view === 'list' && (
           <ViewConsumerOrders
-            consumers={mockData.consumers}
+            consumers={consumers}
             onViewDetails={handleViewDetails}
             onViewOrders={handleViewOrders}
+            consumer={selectedConsumer}
           />
         )}
 
-        {activeTab === 'consumers' && view === 'details' && selectedConsumer && (
+        {!loading && activeTab === 'consumers' && view === 'details' && selectedConsumer && (
           <ConsumerDetails
             consumer={selectedConsumer}
             onBack={handleBack}
@@ -89,32 +248,34 @@ const AdminPanel = () => {
           />
         )}
 
-        {activeTab === 'consumers' && view === 'orders' && selectedConsumer && (
+        {!loading && activeTab === 'consumers' && view === 'orders' && selectedConsumer && (
           <ConsumerOrders
             consumer={selectedConsumer}
-            orders={mockData.consumerOrders}
+            orders={consumerOrders}
             onBack={handleBack}
             onViewOrderDetails={handleViewOrderDetails}
+            consumers={consumers}
           />
         )}
 
-        {activeTab === 'consumers' && view === 'orderDetails' && (
+        {!loading && activeTab === 'consumers' && view === 'orderDetails' && orderDetails && (
           <ConsumerOrderDetails
-            orderDetail={mockData.consumerOrderDetails}
+            orderDetail={orderDetails}
             onBack={handleBack}
+            consumers={consumers}
           />
         )}
 
         {/* VENDOR VIEWS */}
-        {activeTab === 'vendors' && view === 'list' && (
+        {!loading && activeTab === 'vendors' && view === 'list' && (
           <ViewVendorOrders
-            vendors={mockData.vendors}
+            vendors={vendors}
             onViewDetails={handleViewDetails}
             onViewOrders={handleViewOrders}
           />
         )}
 
-        {activeTab === 'vendors' && view === 'details' && selectedVendor && (
+        {!loading && activeTab === 'vendors' && view === 'details' && selectedVendor && (
           <VendorDetails
             vendor={selectedVendor}
             onBack={handleBack}
@@ -122,19 +283,21 @@ const AdminPanel = () => {
           />
         )}
 
-        {activeTab === 'vendors' && view === 'orders' && selectedVendor && (
+        {!loading && activeTab === 'vendors' && view === 'orders' && selectedVendor && (
           <VendorOrders
             vendor={selectedVendor}
-            orders={mockData.vendorOrders}
+            orders={vendorOrders}
             onBack={handleBack}
             onViewOrderDetails={handleViewOrderDetails}
+            consumers={consumers}
           />
         )}
 
-        {activeTab === 'vendors' && view === 'orderDetails' && (
+        {!loading && activeTab === 'vendors' && view === 'orderDetails' && orderDetails && (
           <VendorOrderDetails
-            orderDetail={mockData.vendorOrderDetails}
+            orderDetail={orderDetails}
             onBack={handleBack}
+            consumers={consumers}
           />
         )}
       </div>

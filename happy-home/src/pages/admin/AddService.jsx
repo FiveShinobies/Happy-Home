@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Save, X } from 'lucide-react';
+import { ArrowLeft, Save, X, CheckCircle } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -25,7 +25,7 @@ const AddService = () => {
 
   const [errors, setErrors] = useState({});
 
-  //const categories = ['CLEANING', 'PLUMBING', 'ELECTRICAL', 'PAINTING', 'CARPENTRY', 'AC_REPAIR', 'APPLIANCE_REPAIR', 'PEST_CONTROL', 'GARDENING'];
+
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -64,11 +64,7 @@ const AddService = () => {
       newErrors.price = 'Price must be greater than 0';
     }
     if (!formData.category) newErrors.category = 'Category is required';
-    // if (!formData.image.trim()) {
-    //   newErrors.image = 'Image URL is required';
-    // } else if (!/^https?:\/\/.+/.test(formData.image)) {
-    //   newErrors.image = 'Please provide a valid URL';
-    // }
+
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -104,7 +100,6 @@ const AddService = () => {
 
       const response = await axios.post(`http://localhost:8080/admin/service/add`, form, {
       });
-
       setShowSuccess(true);
       setTimeout(() => {
         navigate('/admin-home/service-listing');
@@ -193,6 +188,45 @@ const AddService = () => {
       backgroundColor: '#f8d7da',
       color: '#842029',
       borderColor: '#f5c2c7'
+    },
+    // Modal styles
+    modalOverlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      animation: 'fadeIn 0.3s ease-out'
+    },
+    modalContent: {
+      backgroundColor: '#ffffff',
+      borderRadius: '1rem',
+      padding: '2.5rem',
+      textAlign: 'center',
+      maxWidth: '400px',
+      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+      animation: 'slideUp 0.4s ease-out'
+    },
+    successIcon: {
+      color: '#10b981',
+      marginBottom: '1rem'
+    },
+    modalTitle: {
+      color: '#10b981',
+      fontSize: '1.5rem',
+      fontWeight: 'bold',
+      marginBottom: '0.5rem'
+    },
+    modalMessage: {
+      color: '#6b7280',
+      fontSize: '0.95rem',
+      marginBottom: '1.5rem',
+      lineHeight: '1.5'
     },
     formGroup: {
       marginBottom: '1.5rem'
@@ -317,6 +351,55 @@ const AddService = () => {
 
   return (
     <div style={styles.pageBackground}>
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes pulse {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.05);
+          }
+        }
+        
+        .success-icon {
+          animation: pulse 0.6s ease-in-out;
+        }
+      `}</style>
+
+      {/* Success Modal */}
+      {showSuccess && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <div style={styles.successIcon} className="success-icon">
+              <CheckCircle size={64} />
+            </div>
+            <h3 style={styles.modalTitle}>Success!</h3>
+            <p style={styles.modalMessage}>
+              Your service has been created successfully. You'll be redirected to the service listing page shortly.
+            </p>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.container}>
@@ -343,14 +426,6 @@ const AddService = () => {
 
       {/* Main Content */}
       <div style={styles.container}>
-        {/* Success Alert */}
-        {showSuccess && (
-          <div style={{ ...styles.alert, ...styles.successAlert }}>
-            <span>✓</span>
-            Service updated successfully! Redirecting...
-          </div>
-        )}
-
         {/* Error Alert */}
         {showError && (
           <div style={{ ...styles.alert, ...styles.errorAlert }}>

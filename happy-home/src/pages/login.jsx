@@ -72,6 +72,7 @@ const Login = () => {
       // Check if login was successful
       if (response.status === 200 && response.data.status === "Success") {
         // Get role from response headers
+        console.log(response.data)
         const role = response.headers['role'];
         if (role) {
           // Store user data in localStorage

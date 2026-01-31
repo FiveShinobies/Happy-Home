@@ -9,7 +9,7 @@ const ViewConsumerOrders = ({ consumers, onViewDetails, onViewOrders }) => (
     </div>
     <div className="card-body">
       {consumers.map((consumer) => (
-        <div key={consumer.id} className={styles.listItem}>
+        <div key={consumer.consumerId} className={styles.listItem}>
           <div className="card-body d-flex justify-content-between align-items-center">
             <div className="d-flex align-items-center gap-3">
               <div

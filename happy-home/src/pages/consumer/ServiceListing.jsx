@@ -10,11 +10,12 @@ import service4 from "../../assets/service4.avif";
 import service5 from "../../assets/service5.avif";
 import service6 from "../../assets/service6.avif";
 
-  const imageData =
-    [service1, service2, service3, service4, service5, service6];
+const imageData =
+  [service1, service2, service3, service4, service5, service6];
 
 const ConsumerServicesListing = () => {
   const [services, setServices] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,15 +27,15 @@ const ConsumerServicesListing = () => {
   const navigate = useNavigate();
 
   // Service categories based on backend enum
-  const categories = [
-    "CLEANING",
-	"REPAIR",
-	"GARDENING",
-	"PLUMBLING",
-	"ELECTRICAL",
-	"BEAUTYANDWELLNESS",
-	"SPA"
-  ];
+  // const categories = [
+  //   "CLEANING",
+  //   "REPAIR",
+  //   "GARDENING",
+  //   "PLUMBLING",
+  //   "ELECTRICAL",
+  //   "BEAUTYANDWELLNESS",
+  //   "SPA"
+  // ];
 
   let min = 1;
   let max = imageData.length - 1;
@@ -45,10 +46,12 @@ const ConsumerServicesListing = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/admin/services'); // Update with actual endpoint
-        console.log('Fetched services:', response.data);
+        const response = await axios.get('http://localhost:8080/services'); // Update with actual endpoint
+        const categoryResponse = await axios.get('http://localhost:8080/services/categories');
         setServices(response.data);
+        setCategories(["ALL", ...categoryResponse.data]);
         setLoading(false);
+        console.log('Fetched services:', response.data);
       } catch (error) {
         console.error('Error fetching services:', error);
         setLoading(false);
@@ -368,16 +371,16 @@ const ConsumerServicesListing = () => {
               >
                 {/* Image Placeholder */}
                 <div style={styles.serviceImage}>
-                  { imageData.length > 0 || (service.serviceImages && service.serviceImages.length)  > 0 ? (
-                    <img 
-                      src={imageData[Math.floor(Math.random() * (max - min + 1)) + min]} 
+                  {imageData.length > 0 || (service.serviceImages && service.serviceImages.length) > 0 ? (
+                    <img
+                      src={imageData[Math.floor(Math.random() * (max - min + 1)) + min]}
                       alt={service.serviceName}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   ) : (
                     <Package size={48} style={{ color: '#1e40af', opacity: 0.3 }} />
                   )}
-                  <div 
+                  <div
                     className="position-absolute top-0 end-0 m-2"
                     style={{
                       background: '#1e40af',
@@ -391,7 +394,7 @@ const ConsumerServicesListing = () => {
                     {getCategoryIcon(service.category)} {formatCategoryName(service.category)}
                   </div>
                   {service.rating > 0 && (
-                    <div 
+                    <div
                       className="position-absolute top-0 start-0 m-2"
                       style={{
                         background: '#ffffff',

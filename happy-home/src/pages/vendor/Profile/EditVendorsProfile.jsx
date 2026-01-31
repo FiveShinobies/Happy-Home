@@ -3,6 +3,17 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import DEFAULT_PROFILE_PIC from '../../../assets/profileimg.png';
+
+
+const byteArrayToImageUrl = (byteArray) => {
+  if (!byteArray) return DEFAULT_PROFILE_PIC;
+
+  const uint8Array = new Uint8Array(byteArray);
+  const blob = new Blob([uint8Array], { type: "image/jpeg" });
+
+  return URL.createObjectURL(blob);
+};
 
 const EditVendorProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -10,9 +21,8 @@ const EditVendorProfile = () => {
   const [loading, setLoading] = useState(true);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // Vendor ID - You can get this from auth context or route params
+  // Vendor ID
   const vendorId = JSON.parse(sessionStorage.getItem('user')).userId;
-  const DEFAULT_PROFILE_PIC = 'https://via.placeholder.com/150';
 
   // Initial state structure
   const [profileData, setProfileData] = useState({
@@ -21,26 +31,25 @@ const EditVendorProfile = () => {
       lastName: '',
       email: '',
       phone: '',
-      alternatePhone: '',
       dateOfBirth: '',
-      gender: '',
-      profileImage: 'https://via.placeholder.com/150',
-      aadharNumber: '',
+      profileImage: DEFAULT_PROFILE_PIC,
+      aadhaarNumber: '',
       panNumber: ''
     },
     addressInfo: {
-      street: '',
-      area: '',
+      homeNo: '',
+      town: '',
       city: '',
       state: '',
-      pincode: '',
-      landmark: ''
+      pincode: ''
     },
     professionalInfo: {
-      expertise:  [],
+      expertise: [], // Will store service IDs as numbers
       experienceYears: 0,
-      workingDays: [],
       languages: []
+    },
+    allServices: {
+      servicesList: [] // Will store all available service objects
     },
     bankDetails: {
       accountHolderName: '',
@@ -53,14 +62,12 @@ const EditVendorProfile = () => {
     stats: {
       totalServices: 0,
       rating: 0,
-      reviews: 0,
-      joinedDate: ''
+      reviews: 0
     }
   });
 
   const [editData, setEditData] = useState({ ...profileData });
 
-  // Fetch vendor data from backend
   useEffect(() => {
     fetchVendorData();
   }, []);
@@ -68,51 +75,51 @@ const EditVendorProfile = () => {
   const fetchVendorData = async () => {
     try {
       setLoading(true);
-      
-      // Fetch all vendor data in parallel
-      const [profileRes, addressRes, bankingRes] = await Promise.all([
+
+      const [profileRes, bankingRes] = await Promise.all([
         axios.get(`http://localhost:8080/vendor/${vendorId}/profile`),
-        axios.get(`http://localhost:8080/vendor/${vendorId}/address`),
         axios.get(`http://localhost:8080/vendor/${vendorId}/banking`)
       ]);
 
       const profile = profileRes.data;
-      const address = addressRes.data;
+      const address = profile.address || {};
       const banking = bankingRes.data || {};
 
-      console.log(profileRes);
-      console.log(addressRes);
-      console.log(bankingRes);
+      console.log('Profile:', profile);
+      console.log('Address:', address);
+      console.log('Banking:', banking);
 
-      // Map backend data to frontend structure
+      // Extract service IDs from servicesProvided objects
+      const selectedServiceIds = (profile.servicesProvided || []).map(service => service.serviceId);
+
+      console.log('Selected Service IDs:', selectedServiceIds);
+      console.log('All Services:', profile.allServices);
+
       const mappedData = {
         personalInfo: {
-          firstName: profile.firstName,
-          lastName: profile.lastName,
-          email: profile.email,
-          phone: profile.phone,
-          // alternatePhone: profile.alternatePhone,
-          dateOfBirth: profile.dateOfBirth,
-          gender: profile.gender,
-          profileImage:  profile.profileImage?.trim()
-                      ? profile.profileImage
-                      : DEFAULT_PROFILE_PIC,
-          aadharNumber: profile.aadharNumber,
-          panNumber: profile.panNumber
+          firstName: profile.firstName || '',
+          lastName: profile.lastName || '',
+          email: profile.email || '',
+          phone: profile.phone || '',
+          dateOfBirth: profile.dateOfBirth || '',
+          profileImage: byteArrayToImageUrl(profile.profileImage),
+          aadhaarNumber: profile.aadhaarNumber || '',
+          panNumber: profile.panNumber || ''
         },
         addressInfo: {
-          street: address.homeNo || '',
-          Town: '',
+          homeNo: address.homeNo || '',
+          town: address.town || '',
           city: address.city || '',
           state: address.state || '',
-          pincode: address.pincode || '',
-          landmark: ''
+          pincode: address.pincode || ''
         },
         professionalInfo: {
-          expertise: profile.servicesProvided ?? [],
-          experienceYears: profile.experience || 0,
-          workingDays: profile.workingDays || [],
-          languages: profile.languages ?? []
+          expertise: selectedServiceIds, // Store only IDs
+          experienceYears: profile.experienceYears || 0,
+          languages: profile.languages || []
+        },
+        allServices: {
+          servicesList: profile.allServices || [] // Store full service objects
         },
         bankDetails: {
           accountHolderName: banking.holderName || '',
@@ -125,8 +132,7 @@ const EditVendorProfile = () => {
         stats: {
           totalServices: profile.totalServices || 0,
           rating: profile.rating || 0,
-          reviews: profile.reviews || 0,
-          joinedDate: profile.joinedDate || ''
+          reviews: profile.totalReviews || 0
         }
       };
 
@@ -156,7 +162,7 @@ const EditVendorProfile = () => {
       const newArray = currentArray.includes(value)
         ? currentArray.filter(item => item !== value)
         : [...currentArray, value];
-      
+
       return {
         ...prev,
         [section]: {
@@ -169,25 +175,28 @@ const EditVendorProfile = () => {
 
   const handleSave = async () => {
     try {
-      // Prepare request body for backend
+      // Prepare request body - send service IDs
       const requestBody = {
         firstName: editData.personalInfo.firstName,
         lastName: editData.personalInfo.lastName,
         email: editData.personalInfo.email,
         phone: editData.personalInfo.phone,
-        dateOfBirth: editData.personalInfo.dateOfBirth,
-        
-        // Address
-        homeNo: editData.addressInfo.street,
+        dob: editData.personalInfo.dateOfBirth, // Changed to 'dob'
+        servicesProvided: editData.professionalInfo.expertise, // Send array of service IDs
+        languages: editData.professionalInfo.languages,
+        homeNo: editData.addressInfo.homeNo,
+        town: editData.addressInfo.town,
         city: editData.addressInfo.city,
         state: editData.addressInfo.state,
         pincode: editData.addressInfo.pincode,
-        
-        // Professional
-        expertise: editData.professionalInfo.expertise,
-        languages: editData.professionalInfo.languages,
-        
+        accountHolderName: editData.bankDetails.accountHolderName,
+        accountNumber: editData.bankDetails.accountNumber,
+        ifscCode: editData.bankDetails.ifscCode,
+        bankName: editData.bankDetails.bankName,
+        branchName: editData.bankDetails.branchName
       };
+
+      console.log('Request Body:', requestBody);
 
       await axios.put(
         `http://localhost:8080/vendor/${vendorId}/profile`,
@@ -201,7 +210,7 @@ const EditVendorProfile = () => {
       setTimeout(() => setShowSuccessModal(false), 3000);
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error('Failed to update profile');
+      toast.error(error.response?.data?.message || 'Failed to update profile');
     }
   };
 
@@ -211,6 +220,12 @@ const EditVendorProfile = () => {
   };
 
   const displayData = isEditing ? editData : profileData;
+
+  // Helper function to get service name by ID
+  const getServiceNameById = (serviceId) => {
+    const service = displayData.allServices.servicesList.find(s => s.serviceId === serviceId);
+    return service ? service.serviceName : 'Unknown Service';
+  };
 
   if (loading) {
     return (
@@ -236,8 +251,6 @@ const EditVendorProfile = () => {
     profileImage: {
       width: '120px',
       height: '120px',
-      borderRadius: '50%',
-      border: '4px solid #ffffff',
       objectFit: 'cover'
     },
     verifiedBadge: {
@@ -270,7 +283,9 @@ const EditVendorProfile = () => {
     tab: {
       background: 'transparent',
       border: 'none',
-      borderBottom: '3px solid transparent',
+      borderBottomWidth: '3px',
+      borderBottomStyle: 'solid',
+      borderBottomColor: 'transparent',
       padding: '1rem 1.5rem',
       fontSize: '1rem',
       fontWeight: '500',
@@ -339,28 +354,32 @@ const EditVendorProfile = () => {
         <div className="container">
           <div className="row align-items-center">
             <div className="col-auto">
-              {/* <img 
-                src={displayData.personalInfo.profileImage || DEFAULT_PROFILE_PIC} 
-                alt="Profile" 
+              <img
+                src={displayData.personalInfo.profileImage}
+                alt="Profile"
                 style={styles.profileImage}
-              /> */}
+              />
               <div style={styles.verifiedBadge}>
                 <i className="bi bi-patch-check-fill"></i> Verified
               </div>
             </div>
-            
+
             <div className="col">
               <h1 className="display-5 fw-bold mb-2">
                 {displayData.personalInfo.firstName} {displayData.personalInfo.lastName}
               </h1>
               <p className="mb-3 opacity-75">
-                {displayData.professionalInfo.expertise.join(' • ')}
+                {displayData.professionalInfo.expertise.length > 0
+                  ? displayData.professionalInfo.expertise.map(id => getServiceNameById(id)).join(' • ')
+                  : 'No services listed'}
+                {displayData.professionalInfo.expertise.length > 0 && displayData.professionalInfo.experienceYears > 0 && ' • '}
+                {displayData.professionalInfo.experienceYears > 0 && `${displayData.professionalInfo.experienceYears} years experience`}
               </p>
-              
+
               <div className="d-flex gap-3 flex-wrap">
                 <div style={styles.statBox}>
                   <i className="bi bi-star-fill d-block mb-1"></i>
-                  <div className="fw-bold">{displayData.stats.rating}</div>
+                  <div className="fw-bold">{displayData.stats.rating.toFixed(1)}</div>
                   <small className="opacity-75">Rating</small>
                 </div>
                 <div style={styles.statBox}>
@@ -378,7 +397,7 @@ const EditVendorProfile = () => {
 
             <div className="col-auto">
               {!isEditing ? (
-                <button 
+                <button
                   className="btn btn-light btn-lg"
                   onClick={() => setIsEditing(true)}
                 >
@@ -387,14 +406,14 @@ const EditVendorProfile = () => {
                 </button>
               ) : (
                 <div className="d-flex gap-2">
-                  <button 
+                  <button
                     className="btn btn-success btn-lg"
                     onClick={handleSave}
                   >
                     <i className="bi bi-check-lg me-2"></i>
                     Save
                   </button>
-                  <button 
+                  <button
                     className="btn btn-outline-light btn-lg"
                     onClick={handleCancel}
                   >
@@ -442,11 +461,11 @@ const EditVendorProfile = () => {
               <div className="col-md-6">
                 <label className="form-label fw-semibold">First Name *</label>
                 {isEditing ? (
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     style={styles.input}
                     value={displayData.personalInfo.firstName}
-                    onChange={(e) => handleInputChange('personalInfo', 'firstName', e.target.value)} 
+                    onChange={(e) => handleInputChange('personalInfo', 'firstName', e.target.value)}
                   />
                 ) : (
                   <div style={styles.displayValue}>{displayData.personalInfo.firstName}</div>
@@ -456,11 +475,11 @@ const EditVendorProfile = () => {
               <div className="col-md-6">
                 <label className="form-label fw-semibold">Last Name *</label>
                 {isEditing ? (
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     style={styles.input}
                     value={displayData.personalInfo.lastName}
-                    onChange={(e) => handleInputChange('personalInfo', 'lastName', e.target.value)} 
+                    onChange={(e) => handleInputChange('personalInfo', 'lastName', e.target.value)}
                   />
                 ) : (
                   <div style={styles.displayValue}>{displayData.personalInfo.lastName}</div>
@@ -470,11 +489,11 @@ const EditVendorProfile = () => {
               <div className="col-md-6">
                 <label className="form-label fw-semibold">Email *</label>
                 {isEditing ? (
-                  <input 
-                    type="email" 
+                  <input
+                    type="email"
                     style={styles.input}
                     value={displayData.personalInfo.email}
-                    onChange={(e) => handleInputChange('personalInfo', 'email', e.target.value)} 
+                    onChange={(e) => handleInputChange('personalInfo', 'email', e.target.value)}
                   />
                 ) : (
                   <div style={styles.displayValue}>{displayData.personalInfo.email}</div>
@@ -484,55 +503,33 @@ const EditVendorProfile = () => {
               <div className="col-md-6">
                 <label className="form-label fw-semibold">Phone *</label>
                 {isEditing ? (
-                  <input 
-                    type="tel" 
+                  <input
+                    type="tel"
                     style={styles.input}
                     value={displayData.personalInfo.phone}
-                    onChange={(e) => handleInputChange('personalInfo', 'phone', e.target.value)} 
+                    onChange={(e) => handleInputChange('personalInfo', 'phone', e.target.value)}
                   />
                 ) : (
                   <div style={styles.displayValue}>{displayData.personalInfo.phone}</div>
                 )}
               </div>
 
-
               <div className="col-md-6">
                 <label className="form-label fw-semibold">Date of Birth *</label>
                 {isEditing ? (
-                  <input 
-                    type="date" 
+                  <input
+                    type="date"
                     style={styles.input}
                     value={displayData.personalInfo.dateOfBirth}
-                    onChange={(e) => handleInputChange('personalInfo', 'dateOfBirth', e.target.value)} 
+                    onChange={(e) => handleInputChange('personalInfo', 'dateOfBirth', e.target.value)}
                   />
                 ) : (
                   <div style={styles.displayValue}>
-                    {new Date(displayData.personalInfo.dateOfBirth).toLocaleDateString('en-IN')}
+                    {displayData.personalInfo.dateOfBirth
+                      ? new Date(displayData.personalInfo.dateOfBirth).toLocaleDateString('en-IN')
+                      : 'Not provided'}
                   </div>
                 )}
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Gender *</label>
-                {isEditing ? (
-                  <select 
-                    style={styles.input}
-                    value={displayData.personalInfo.gender}
-                    onChange={(e) => handleInputChange('personalInfo', 'gender', e.target.value)}
-                  >
-                    <option value="">Select Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
-                ) : (
-                  <div style={styles.displayValue}>{displayData.personalInfo.gender}</div>
-                )}
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Member Since</label>
-                <div style={styles.displayValue}>{displayData.stats.joinedDate}</div>
               </div>
             </div>
 
@@ -540,18 +537,18 @@ const EditVendorProfile = () => {
               <h3 className="h5 fw-bold mb-3" style={{ color: '#000000' }}>Identity Documents</h3>
               <div className="row g-3">
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold">Aadhar Number</label>
-                  <div style={{...styles.displayValue, ...styles.maskedValue}}>
+                  <label className="form-label fw-semibold">Aadhaar Number</label>
+                  <div style={{ ...styles.displayValue, ...styles.maskedValue }}>
                     <i className="bi bi-shield-lock-fill text-primary"></i>
-                    XXXXXXXXXXXX{displayData.bankDetails.accountNumber?.slice(-4)}
+                    {displayData.personalInfo.aadhaarNumber || 'Not provided'}
                   </div>
-              </div>
+                </div>
 
-              <div className="col-md-6">
+                <div className="col-md-6">
                   <label className="form-label fw-semibold">PAN Number</label>
-                  <div style={{...styles.displayValue, ...styles.maskedValue}}>
+                  <div style={{ ...styles.displayValue, ...styles.maskedValue }}>
                     <i className="bi bi-shield-lock-fill text-primary"></i>
-                    XXXXX{displayData.personalInfo.panNumber?.slice(-4)}
+                    {displayData.personalInfo.panNumber || 'Not provided'}
                   </div>
                 </div>
               </div>
@@ -569,87 +566,73 @@ const EditVendorProfile = () => {
             <h2 className="h4 fw-bold mb-4" style={{ color: '#000000' }}>Address Information</h2>
             <div className="row g-3">
               <div className="col-12">
-                <label className="form-label fw-semibold">Street Address *</label>
+                <label className="form-label fw-semibold">Home No / Street Address *</label>
                 {isEditing ? (
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     style={styles.input}
                     value={displayData.addressInfo.homeNo}
-                    onChange={(e) => handleInputChange('addressInfo', 'street', e.target.value)} 
+                    onChange={(e) => handleInputChange('addressInfo', 'homeNo', e.target.value)}
                   />
                 ) : (
-                  <div style={styles.displayValue}>{displayData.addressInfo.street}</div>
+                  <div style={styles.displayValue}>{displayData.addressInfo.homeNo || 'Not provided'}</div>
                 )}
               </div>
 
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Area *</label>
+                <label className="form-label fw-semibold">Town</label>
                 {isEditing ? (
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     style={styles.input}
-                    value={displayData.addressInfo.area}
-                    onChange={(e) => handleInputChange('addressInfo', 'area', e.target.value)} 
+                    value={displayData.addressInfo.town}
+                    onChange={(e) => handleInputChange('addressInfo', 'town', e.target.value)}
                   />
                 ) : (
-                  <div style={styles.displayValue}>{displayData.addressInfo.area}</div>
+                  <div style={styles.displayValue}>{displayData.addressInfo.town || 'Not provided'}</div>
                 )}
               </div>
 
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Landmark</label>
-                {isEditing ? (
-                  <input 
-                    type="text" 
-                    style={styles.input}
-                    value={displayData.addressInfo.landmark}
-                    onChange={(e) => handleInputChange('addressInfo', 'landmark', e.target.value)} 
-                  />
-                ) : (
-                  <div style={styles.displayValue}>{displayData.addressInfo.landmark || 'Not provided'}</div>
-                )}
-              </div>
-
-              <div className="col-md-4">
                 <label className="form-label fw-semibold">City *</label>
                 {isEditing ? (
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     style={styles.input}
                     value={displayData.addressInfo.city}
-                    onChange={(e) => handleInputChange('addressInfo', 'city', e.target.value)} 
+                    onChange={(e) => handleInputChange('addressInfo', 'city', e.target.value)}
                   />
                 ) : (
-                  <div style={styles.displayValue}>{displayData.addressInfo.city}</div>
+                  <div style={styles.displayValue}>{displayData.addressInfo.city || 'Not provided'}</div>
                 )}
               </div>
 
-              <div className="col-md-4">
+              <div className="col-md-6">
                 <label className="form-label fw-semibold">State *</label>
                 {isEditing ? (
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     style={styles.input}
                     value={displayData.addressInfo.state}
-                    onChange={(e) => handleInputChange('addressInfo', 'state', e.target.value)} 
+                    onChange={(e) => handleInputChange('addressInfo', 'state', e.target.value)}
                   />
                 ) : (
-                  <div style={styles.displayValue}>{displayData.addressInfo.state}</div>
+                  <div style={styles.displayValue}>{displayData.addressInfo.state || 'Not provided'}</div>
                 )}
               </div>
 
-              <div className="col-md-4">
+              <div className="col-md-6">
                 <label className="form-label fw-semibold">PIN Code *</label>
                 {isEditing ? (
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     style={styles.input}
                     maxLength="6"
                     value={displayData.addressInfo.pincode}
-                    onChange={(e) => handleInputChange('addressInfo', 'pincode', e.target.value)} 
+                    onChange={(e) => handleInputChange('addressInfo', 'pincode', e.target.value)}
                   />
                 ) : (
-                  <div style={styles.displayValue}>{displayData.addressInfo.pincode}</div>
+                  <div style={styles.displayValue}>{displayData.addressInfo.pincode || 'Not provided'}</div>
                 )}
               </div>
             </div>
@@ -660,68 +643,23 @@ const EditVendorProfile = () => {
         {activeTab === 'professional' && (
           <div style={styles.card}>
             <h2 className="h4 fw-bold mb-4" style={{ color: '#000000' }}>Professional Information</h2>
-            
-            <div className="mb-4">
-              <label className="form-label fw-semibold">Areas of Expertise *</label>
-              {isEditing ? (
-                <div className="row g-2">
-                  {['Home Cleaning', 'Deep Cleaning', 'Bathroom Cleaning', 'Kitchen Cleaning', 'AC Repair', 'Plumbing', 'Electrical', 'Painting'].map(skill => (
-                    <div key={skill} className="col-md-6">
-                      <div className="form-check">
-                        <input 
-                          className="form-check-input" 
-                          type="checkbox" 
-                          id={`skill-${skill}`}
-                          checked={displayData.professionalInfo.expertise.includes(skill)}
-                          onChange={() => handleArrayToggle('professionalInfo', 'expertise', skill)} 
-                        />
-                        <label className="form-check-label" htmlFor={`skill-${skill}`}>
-                          {skill}
-                        </label>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div>
-                  {displayData.professionalInfo.expertise.map(skill => (
-                    <span key={skill} style={styles.tag}>{skill}</span>
-                  ))}
-                </div>
-              )}
-            </div>
 
             <div className="mb-4">
-              <label className="form-label fw-semibold">Experience (Years) *</label>
-              {isEditing ? (
-                <input 
-                  type="number" 
-                  style={styles.input}
-                  min="0"
-                  value={displayData.professionalInfo.experienceYears}
-                  onChange={(e) => handleInputChange('professionalInfo', 'experienceYears', e.target.value)} 
-                />
-              ) : (
-                <div style={styles.displayValue}>{displayData.professionalInfo.experienceYears} years</div>
-              )}
-            </div>
-
-            <div className="mb-4">
-              <label className="form-label fw-semibold">Working Days *</label>
+              <label className="form-label fw-semibold">Services Provided *</label>
               {isEditing ? (
                 <div className="row g-2">
-                  {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
-                    <div key={day} className="col-md-6">
+                  {displayData.allServices.servicesList.map(service => (
+                    <div key={service.serviceId} className="col-md-6">
                       <div className="form-check">
-                        <input 
-                          className="form-check-input" 
+                        <input
+                          className="form-check-input"
                           type="checkbox"
-                          id={`day-${day}`}
-                          checked={displayData.professionalInfo.workingDays.includes(day)}
-                          onChange={() => handleArrayToggle('professionalInfo', 'workingDays', day)} 
+                          id={`skill-${service.serviceId}`}
+                          checked={displayData.professionalInfo.expertise.includes(service.serviceId)}
+                          onChange={() => handleArrayToggle('professionalInfo', 'expertise', service.serviceId)}
                         />
-                        <label className="form-check-label" htmlFor={`day-${day}`}>
-                          {day}
+                        <label className="form-check-label" htmlFor={`skill-${service.serviceId}`}>
+                          {service.serviceName}
                         </label>
                       </div>
                     </div>
@@ -729,9 +667,14 @@ const EditVendorProfile = () => {
                 </div>
               ) : (
                 <div>
-                  {displayData.professionalInfo.workingDays.map(day => (
-                    <span key={day} style={styles.tag}>{day}</span>
-                  ))}
+                  {displayData.professionalInfo.expertise.length > 0
+                    ? displayData.professionalInfo.expertise.map(serviceId => (
+                      <span key={serviceId} style={styles.tag}>
+                        {getServiceNameById(serviceId)}
+                      </span>
+                    ))
+                    : <div style={styles.displayValue}>No services selected</div>
+                  }
                 </div>
               )}
             </div>
@@ -740,15 +683,15 @@ const EditVendorProfile = () => {
               <label className="form-label fw-semibold">Languages *</label>
               {isEditing ? (
                 <div className="row g-2">
-                  {['English', 'Hindi', 'Kannada', 'Tamil', 'Telugu', 'Malayalam'].map(lang => (
+                  {['English', 'Hindi', 'Marathi', 'Kannada', 'Tamil', 'Telugu', 'Malayalam'].map(lang => (
                     <div key={lang} className="col-md-6">
                       <div className="form-check">
-                        <input 
-                          className="form-check-input" 
+                        <input
+                          className="form-check-input"
                           type="checkbox"
                           id={`lang-${lang}`}
                           checked={displayData.professionalInfo.languages.includes(lang)}
-                          onChange={() => handleArrayToggle('professionalInfo', 'languages', lang)} 
+                          onChange={() => handleArrayToggle('professionalInfo', 'languages', lang)}
                         />
                         <label className="form-check-label" htmlFor={`lang-${lang}`}>
                           {lang}
@@ -759,9 +702,12 @@ const EditVendorProfile = () => {
                 </div>
               ) : (
                 <div>
-                  {displayData.professionalInfo.languages.map(lang => (
-                    <span key={lang} style={styles.tag}>{lang}</span>
-                  ))}
+                  {displayData.professionalInfo.languages.length > 0
+                    ? displayData.professionalInfo.languages.map(lang => (
+                      <span key={lang} style={styles.tag}>{lang}</span>
+                    ))
+                    : <div style={styles.displayValue}>No languages selected</div>
+                  }
                 </div>
               )}
             </div>
@@ -776,30 +722,38 @@ const EditVendorProfile = () => {
               <div className="col-12">
                 <label className="form-label fw-semibold">Account Holder Name *</label>
                 {isEditing ? (
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     style={styles.input}
                     value={displayData.bankDetails.accountHolderName}
-                    onChange={(e) => handleInputChange('bankDetails', 'accountHolderName', e.target.value)} 
+                    onChange={(e) =>
+                      handleInputChange('bankDetails', 'accountHolderName', e.target.value)
+                    }
                   />
                 ) : (
-                  <div style={styles.displayValue}>{displayData.bankDetails.accountHolderName}</div>
+                  <div style={styles.displayValue}>
+                    {displayData.bankDetails.accountHolderName || 'Not provided'}
+                  </div>
                 )}
               </div>
 
               <div className="col-md-6">
                 <label className="form-label fw-semibold">Account Number *</label>
                 {isEditing ? (
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     style={styles.input}
                     value={displayData.bankDetails.accountNumber}
-                    onChange={(e) => handleInputChange('bankDetails', 'accountNumber', e.target.value)} 
+                    onChange={(e) =>
+                      handleInputChange('bankDetails', 'accountNumber', e.target.value)
+                    }
                   />
                 ) : (
-                  <div style={{...styles.displayValue, ...styles.maskedValue}}>
+                  <div style={{ ...styles.displayValue, ...styles.maskedValue }}>
                     <i className="bi bi-shield-lock-fill text-primary"></i>
-                    XXXXXXXXXXXX{displayData.bankDetails.accountNumber?.slice(-4)}
+                    {displayData.bankDetails.accountNumber
+                      ? `XXXXXXXXXXXX${displayData.bankDetails.accountNumber.slice(-4)}`
+                      : 'Not provided'}
                   </div>
                 )}
               </div>
@@ -807,62 +761,58 @@ const EditVendorProfile = () => {
               <div className="col-md-6">
                 <label className="form-label fw-semibold">IFSC Code *</label>
                 {isEditing ? (
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     style={styles.input}
                     value={displayData.bankDetails.ifscCode}
-                    onChange={(e) => handleInputChange('bankDetails', 'ifscCode', e.target.value)} 
+                    onChange={(e) =>
+                      handleInputChange('bankDetails', 'ifscCode', e.target.value)
+                    }
                   />
                 ) : (
-                  <div style={styles.displayValue}>{displayData.bankDetails.ifscCode}</div>
+                  <div style={styles.displayValue}>
+                    {displayData.bankDetails.ifscCode || 'Not provided'}
+                  </div>
                 )}
               </div>
 
               <div className="col-md-6">
                 <label className="form-label fw-semibold">Bank Name *</label>
                 {isEditing ? (
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     style={styles.input}
                     value={displayData.bankDetails.bankName}
-                    onChange={(e) => handleInputChange('bankDetails', 'bankName', e.target.value)} 
+                    onChange={(e) =>
+                      handleInputChange('bankDetails', 'bankName', e.target.value)
+                    }
                   />
                 ) : (
-                  <div style={styles.displayValue}>{displayData.bankDetails.bankName}</div>
+                  <div style={styles.displayValue}>{displayData.bankDetails.bankName || 'Not provided'}</div>
                 )}
               </div>
 
               <div className="col-md-6">
                 <label className="form-label fw-semibold">Branch Name *</label>
                 {isEditing ? (
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     style={styles.input}
                     value={displayData.bankDetails.branchName}
-                    onChange={(e) => handleInputChange('bankDetails', 'branchName', e.target.value)} 
+                    onChange={(e) =>
+                      handleInputChange('bankDetails', 'branchName', e.target.value)
+                    }
                   />
                 ) : (
-                  <div style={styles.displayValue}>{displayData.bankDetails.branchName}</div>
-                )}
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">UPI ID</label>
-                {isEditing ? (
-                  <input 
-                    type="text" 
-                    style={styles.input}
-                    value={displayData.bankDetails.upiId}
-                    onChange={(e) => handleInputChange('bankDetails', 'upiId', e.target.value)} 
-                  />
-                ) : (
-                  <div style={styles.displayValue}>{displayData.bankDetails.upiId || 'Not provided'}</div>
+                  <div style={styles.displayValue}>
+                    {displayData.bankDetails.branchName || 'Not provided'}
+                  </div>
                 )}
               </div>
             </div>
-            <div style={{...styles.infoAlert, ...styles.successAlert}} className="mt-4">
+            <div style={{ ...styles.infoAlert, ...styles.successAlert }} className="mt-4">
               <i className="bi bi-shield-check-fill"></i>
-              Your banking info is encrypted. Payments processed in 24-48 hours.
+              Please double-check your banking details before saving.
             </div>
           </div>
         )}
@@ -870,18 +820,18 @@ const EditVendorProfile = () => {
 
       {/* Success Modal */}
       {showSuccessModal && (
-        <div 
+        <div
           className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-          style={{ 
-            background: 'rgba(0,0,0,0.5)', 
-            zIndex: 9999 
+          style={{
+            background: 'rgba(0,0,0,0.5)',
+            zIndex: 9999
           }}
         >
-          <div 
+          <div
             className="bg-white rounded-4 p-5 text-center"
             style={{ maxWidth: '400px' }}
           >
-            <div 
+            <div
               className="rounded-circle bg-success d-inline-flex align-items-center justify-content-center mb-3"
               style={{ width: '80px', height: '80px' }}
             >

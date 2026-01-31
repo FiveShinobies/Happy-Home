@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Star, MapPin, Clock, Package, ArrowLeft, Phone, CheckCircle, Trash2Icon, TrashIcon } from "lucide-react";
+import { Star, MapPin, Clock, Package, ArrowLeft, Phone, CheckCircle, Trash2Icon, TrashIcon, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
@@ -8,6 +8,7 @@ import service1 from "../../../assets/service1.jpg";
 import service2 from "../../../assets/service2.jpg";
 import service3 from "../../../assets/service3.jpg";
 import service4 from "../../../assets/service4.avif";
+import { toast } from "react-toastify";
 
 const ServiceDetailsAdmin = () => {
   const { id } = useParams();
@@ -15,13 +16,15 @@ const ServiceDetailsAdmin = () => {
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch service details from backend
   useEffect(() => {
     const fetchServiceDetails = async () => {
       try {
         const response = await axios.get(`http://localhost:8080/admin/services/${id}`);
-        console.log('Fetched service:', response.data);
         setService(response.data);
         setLoading(false);
       } catch (error) {
@@ -54,17 +57,19 @@ const ServiceDetailsAdmin = () => {
       .join(' ');
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this service?")) return;
-
+  const handleDelete = async (serviceId) => {
+    setIsDeleting(true);
     try {
-      await axios.delete(`http://localhost:8080/admin/service/${id}`);
-
-      alert("Service deleted successfully");
-      navigate("/admin-home/service-listing");
-      setTimeout(() => setShowAlert(false), 3000);
+      await axios.delete(`http://localhost:8080/admin/service/${serviceId}`);
+      setShowDeleteConfirm(false);
+      setShowDeleteSuccess(true);
+      setTimeout(() => {
+        navigate("/admin-home/service-listing");
+      }, 2000);
     } catch (err) {
+      console.error("Failed to delete service:", err);
       alert("Failed to delete service");
+      setIsDeleting(false);
     }
   };
 
@@ -195,6 +200,78 @@ const ServiceDetailsAdmin = () => {
     stickyCard: {
       position: 'sticky',
       top: '100px'
+    },
+    // Modal styles
+    modalOverlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      animation: 'fadeIn 0.3s ease-out'
+    },
+    modalContent: {
+      backgroundColor: '#ffffff',
+      borderRadius: '1rem',
+      padding: '2.5rem',
+      textAlign: 'center',
+      maxWidth: '450px',
+      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+      animation: 'slideUp 0.4s ease-out'
+    },
+    deleteIcon: {
+      color: '#dc3545',
+      marginBottom: '1rem'
+    },
+    successIcon: {
+      color: '#10b981',
+      marginBottom: '1rem'
+    },
+    modalTitle: {
+      fontSize: '1.5rem',
+      fontWeight: 'bold',
+      marginBottom: '0.5rem',
+      color: '#000000'
+    },
+    deleteTitle: {
+      color: '#dc3545'
+    },
+    successTitle: {
+      color: '#10b981'
+    },
+    modalMessage: {
+      color: '#6b7280',
+      fontSize: '0.95rem',
+      marginBottom: '2rem',
+      lineHeight: '1.5'
+    },
+    modalButtonGroup: {
+      display: 'flex',
+      gap: '1rem',
+      justifyContent: 'center'
+    },
+    confirmButton: {
+      padding: '0.75rem 1.5rem',
+      borderRadius: '0.75rem',
+      fontSize: '1rem',
+      fontWeight: 'bold',
+      cursor: 'pointer',
+      border: 'none',
+      transition: 'all 0.2s ease'
+    },
+    deleteButton: {
+      backgroundColor: '#dc3545',
+      color: '#ffffff'
+    },
+    cancelButton: {
+      backgroundColor: '#ffffff',
+      color: '#6c757d',
+      border: '2px solid #6c757d'
     }
   };
 
@@ -241,6 +318,91 @@ const ServiceDetailsAdmin = () => {
 
   return (
     <div style={styles.pageBackground}>
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes pulse {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.05);
+          }
+        }
+        
+        .delete-icon-pulse {
+          animation: pulse 0.6s ease-in-out;
+        }
+      `}</style>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <div style={styles.deleteIcon} className="delete-icon-pulse">
+              <AlertCircle size={64} />
+            </div>
+            <h3 style={{ ...styles.modalTitle, ...styles.deleteTitle }}>Delete Service?</h3>
+            <p style={styles.modalMessage}>
+              Are you sure you want to delete <strong>{service?.serviceName}</strong>? This action cannot be undone.
+            </p>
+            <div style={styles.modalButtonGroup}>
+              <button
+                style={{ ...styles.confirmButton, ...styles.deleteButton }}
+                onClick={() => handleDelete(service.serviceId)}
+                disabled={isDeleting}
+                onMouseOver={(e) => !isDeleting && (e.target.style.backgroundColor = '#b02a2a')}
+                onMouseOut={(e) => (e.target.style.backgroundColor = '#dc3545')}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+              <button
+                style={{ ...styles.confirmButton, ...styles.cancelButton }}
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                onMouseOver={(e) => !isDeleting && (e.target.style.backgroundColor = '#6c757d') && (e.target.style.color = '#ffffff')}
+                onMouseOut={(e) => (e.target.style.backgroundColor = '#ffffff') && (e.target.style.color = '#6c757d')}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Success Modal */}
+      {showDeleteSuccess && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <div style={styles.successIcon}>
+              <CheckCircle2 size={64} />
+            </div>
+            <h3 style={{ ...styles.modalTitle, ...styles.successTitle }}>Service Deleted!</h3>
+            <p style={styles.modalMessage}>
+              The service has been successfully deleted. You'll be redirected shortly.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={styles.header}>
         <div className="container py-3">
@@ -493,7 +655,7 @@ const ServiceDetailsAdmin = () => {
                     e.target.style.background = '#ffffff';
                     e.target.style.color = '#af1e3b';
                   }}
-                  onClick={() => handleDelete(service.serviceId)}
+                  onClick={() => setShowDeleteConfirm(true)}
                 >
                   <Trash2Icon size={18} className="me-2" />
                   Delete service
