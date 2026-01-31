@@ -29,12 +29,13 @@ const VendorOrders = ({ vendor, orders, onBack, onViewOrderDetails }) => (
           <tbody>
             {orders.map((order) => (
               <tr key={order.id} className={styles.tableRow}>
-                <td className="fw-semibold">{order.orderNumber}</td>
-                <td>{order.date}</td>
-                <td>{order.items} items</td>
+                <td className="fw-semibold">{order.orderId}</td>
+                <td>{order.orderDate}</td>
+                <td>{order.name} Service</td>
                 <td className="fw-bold text-primary">{order.total}</td>
                 <td>
-                  <span className="badge bg-secondary">
+                  <span className={`badge ${utils.getStatusColor(order.status)}`}>
+
                     {/* you can map utils.getStatusColor to Bootstrap badge variants if you want */}
                     {order.status}
                   </span>
@@ -42,7 +43,7 @@ const VendorOrders = ({ vendor, orders, onBack, onViewOrderDetails }) => (
                 <td>
                   <button
                     type="button"
-                    onClick={() => onViewOrderDetails(order)}
+                    onClick={() => onViewOrderDetails(order.orderId)}
                     className={styles.button.primary}
                   >
                     View Details

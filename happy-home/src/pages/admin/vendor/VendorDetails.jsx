@@ -30,9 +30,9 @@ const VendorDetails = ({ vendor, onBack, onViewOrders }) => (
         <div className="col-md-6">
           <FormField label="Rating" value={`${vendor.rating} ⭐`} />
         </div>
-        <div className="col-md-6">
+        {/* <div className="col-md-6">
           <FormField label="Join Date" value={vendor.joinDate} />
-        </div>
+        </div> */}
       </div>
       <div className="mt-3">
         <button

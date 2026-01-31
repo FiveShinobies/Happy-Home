@@ -13,7 +13,7 @@ const ConsumerDetails = ({ consumer, onBack, onViewOrders }) => (
     <div className="card-body">
       <div className="row">
         <div className="col-md-6">
-          <FormField label="Name" value={consumer.name} />
+          <FormField label="Name" value={consumer.firstName + " " + consumer.lastName} />
         </div>
         <div className="col-md-6">
           <FormField label="Email" value={consumer.email} />
@@ -22,13 +22,13 @@ const ConsumerDetails = ({ consumer, onBack, onViewOrders }) => (
           <FormField label="Phone" value={consumer.phone} />
         </div>
         <div className="col-md-6">
-          <FormField label="City" value={consumer.city} />
+          <FormField label="City" value={consumer.address[0].city} />
         </div>
         <div className="col-md-6">
-          <FormField label="Address" value={consumer.address} />
+          <FormField label="Address" value={consumer.address[0].homeNo + ", " + consumer.address[0].town + ", " + consumer.address[0].city + ", " + consumer.address[0].state + ", " + consumer.address[0].pincode} />
         </div>
         <div className="col-md-6">
-          <FormField label="Join Date" value={consumer.joinDate} />
+          <FormField label="Reward points" value={consumer.rewardPoints} />
         </div>
       </div>
       <div className="mt-3">
