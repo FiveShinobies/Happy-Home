@@ -3,12 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Star, MapPin, Clock, Package, ArrowLeft, Phone, CheckCircle, Trash2Icon, TrashIcon, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import axios from "axios";
 import service1 from "../../../assets/service1.jpg";
 import service2 from "../../../assets/service2.jpg";
 import service3 from "../../../assets/service3.jpg";
 import service4 from "../../../assets/service4.avif";
 import { toast } from "react-toastify";
+import api from "../../../api/api";
 
 const ServiceDetailsAdmin = () => {
   const { id } = useParams();
@@ -24,7 +24,7 @@ const ServiceDetailsAdmin = () => {
   useEffect(() => {
     const fetchServiceDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:8080/admin/services/${id}`);
+        const response = await api.get(`/admin/services/${id}`);
         setService(response.data);
         setLoading(false);
       } catch (error) {
@@ -60,7 +60,7 @@ const ServiceDetailsAdmin = () => {
   const handleDelete = async (serviceId) => {
     setIsDeleting(true);
     try {
-      await axios.delete(`http://localhost:8080/admin/service/${serviceId}`);
+      await api.delete(`/admin/service/${serviceId}`);
       setShowDeleteConfirm(false);
       setShowDeleteSuccess(true);
       setTimeout(() => {

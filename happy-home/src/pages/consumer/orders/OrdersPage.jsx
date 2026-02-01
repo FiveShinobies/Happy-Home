@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, User, Package, AlertCircle, CheckCircle, Eye, Star, DollarSign } from 'lucide-react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import axios from 'axios';
 import LoginRequired from '../service/LoginRequired';
 import { useNavigate} from 'react-router-dom';
+import api from "../../../api/api";
 
 const OrdersPage = () => {
   const [orders, setOrders] = useState([]);
@@ -27,7 +27,7 @@ const OrdersPage = () => {
     const fetchOrders = async () => {
       try {
         const cid = JSON.parse(sessionStorage.getItem('user')).userId;
-        const response = await axios.get(`http://localhost:8080/consumer/${cid}/allOrders`);
+        const response = await api.get(`/consumer/${cid}/allOrders`);
         console.log('Fetched orders:', response.data);
         setOrders(response.data);
         setLoading(false);

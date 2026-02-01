@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Star, Clock, Search, Filter, Package, DollarSign } from "lucide-react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import axios from "axios";
 import service1 from "../../../src/assets/service1.jpg.jpeg";
 import service2 from "../../assets/service2.jpg.jpeg";
 import service3 from "../../assets/service3.jpg.jpeg";
 import service4 from "../../assets/service4.avif";
 import service5 from "../../assets/service5.avif";
 import service6 from "../../assets/service6.avif";
+import api from "../../api/api";
 
 const imageData =
   [service1, service2, service3, service4, service5, service6];
@@ -46,8 +46,8 @@ const ConsumerServicesListing = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/services'); // Update with actual endpoint
-        const categoryResponse = await axios.get('http://localhost:8080/services/categories');
+        const response = await api.get('/services'); // Update with actual endpoint
+        const categoryResponse = await api.get('/services/categories');
         setServices(response.data);
         setCategories(["ALL", ...categoryResponse.data]);
         setLoading(false);

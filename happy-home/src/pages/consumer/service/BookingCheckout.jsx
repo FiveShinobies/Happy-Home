@@ -14,11 +14,11 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import axios from "axios";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import LoginRequired from "./LoginRequired";
 import AddAddressForm from "./../../../components/consumer/AddAddressForm";
 import { toast } from "react-toastify";
+import api from "../../../api/api";
 
 const BookingCheckout = () => {
   const [consumerData, setConsumerData] = useState(null);
@@ -55,8 +55,8 @@ const BookingCheckout = () => {
           return;
         }
 
-        const response = await axios.get(
-          `http://localhost:8080/booking/form/${cId}/${serviceId}`
+        const response = await api.get(
+          `/booking/form/${cId}/${serviceId}`
         );
         console.log('Fetched booking data:', response.data);
         setConsumerData(response.data);
@@ -127,8 +127,8 @@ const BookingCheckout = () => {
       const service = consumerData?.service;
 
       // 1️⃣ Create order on backend
-      const res = await axios.post(
-        "http://localhost:8080/payments/create-order",
+      const res = await api.post(
+        "/payments/create-order",
         null,
         {
           params: {
@@ -173,8 +173,8 @@ const BookingCheckout = () => {
             },
           };
 
-          await axios.post(
-            "http://localhost:8080/payments/verify",
+          await api.post(
+            "/payments/verify",
             verifyAndOrderRes,
           );
 

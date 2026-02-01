@@ -3,13 +3,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Star, MapPin, Clock, Package, ArrowLeft, Phone, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import axios from "axios";
 import service1 from "../../../assets/service1.jpg.jpeg";
 import service2 from "../../../assets/service2.jpg.jpeg";
 import service3 from "../../../assets/service3.jpg.jpeg";
 import service4 from "../../../assets/service4.avif";
 import service5 from "../../../assets/service5.avif";
 import service6 from "../../../assets/service6.avif";
+import api from "../../../api/api";
 
 const imageData =
   [service1, service2, service3, service4, service5, service6];
@@ -26,7 +26,7 @@ const ServiceDetails = () => {
     const fetchServiceDetails = async () => {
       try {
 
-        const response = await axios.get(`http://localhost:8080/admin/services/${id}`);
+        const response = await api.get(`/admin/services/${id}`);
         console.log('Fetched service:', response.data);
         setService(response.data);
         setLoading(false);

@@ -12,7 +12,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import axios from "axios";
+import api from "../../api/api";
 
 export default function OrderHistory() {
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ export default function OrderHistory() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await axios.get(`http://localhost:8080/admin/vendors/${vendorId}/orders`);
+        const response = await api.get(`/admin/vendors/${vendorId}/orders`);
         console.log('Fetched orders:', response.data);
         setOrders(response.data);
         setLoading(false);

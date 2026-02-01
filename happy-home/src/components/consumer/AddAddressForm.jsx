@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
 import { MapPin, Home, Building2, Map, Navigation, X } from 'lucide-react';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+import api from "../../api/api"
 
 const AddAddressForm = ({ show, onHide, onAddressAdded, consumerId }) => {
   const [formData, setFormData] = useState({
@@ -96,8 +96,8 @@ const AddAddressForm = ({ show, onHide, onAddressAdded, consumerId }) => {
       const userId = consumerId || JSON.parse(sessionStorage.getItem('user')).userId;
       
       // POST request to add address
-      const response = await axios.post(
-        `http://localhost:8080/consumer/add-address/${userId}`,
+      const response = await api.post(
+        `/consumer/add-address/${userId}`,
         formData,
         {
           headers: {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { User, Mail, Lock, Phone, MapPin, Briefcase, Eye, EyeOff, Calendar, CreditCard, FileText } from 'lucide-react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import api from '../api/api';
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -41,7 +41,7 @@ const Register = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/services/categories');
+        const response = await api.get('/services/categories');
         setCategories(response.data);
       } catch (error) {
         console.error('Failed to fetch categories', error);
@@ -80,8 +80,8 @@ const Register = () => {
     }
 
     try {
-      const response = await axios.get(
-        `http://localhost:8080/services/category?category=${selectedCategory}`
+      const response = await api.get(
+        `/services/category?category=${selectedCategory}`
       );
       setServices(response.data);
     } catch (error) {
@@ -195,13 +195,13 @@ const Register = () => {
             }
           ]
         };
-        endpoint = 'http://localhost:8080/signup/vendor';
+        endpoint = '/signup/vendor';
       } else {
         payload = basePayload;
-        endpoint = 'http://localhost:8080/signup/consumer';
+        endpoint = '/signup/consumer';
       }
 
-      const response = await axios.post(endpoint, payload, {
+      const response = await api.post(endpoint, payload, {
         headers: {
           'Content-Type': 'application/json',
         }

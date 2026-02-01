@@ -3,7 +3,7 @@ import { Container, Row, Col, Card, Form, Button } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+import api from '../api/api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -60,8 +60,8 @@ const Login = () => {
 
     try {
       // Call backend login API
-      const response = await axios.post(
-        'http://localhost:8080/login',
+      const response = await api.post(
+        '/login',
         {
           email: formData.email,
           password: formData.password
@@ -74,6 +74,10 @@ const Login = () => {
         // Get role from response headers
         console.log(response.data)
         const role = response.headers['role'];
+        const token = response.headers['authorization'];
+        console.log('User role from headers:', role);
+        console.log('User token from headers:', token);
+
         if (role) {
           // Store user data in localStorage
           // localStorage.setItem('userType', role.toLowerCase());
@@ -88,10 +92,11 @@ const Login = () => {
             JSON.stringify({
               userId: response.data.userId,
               email: formData.email,
-              role: role.toLowerCase()
+              role: role.toLowerCase(),
+              token: token
             })
           );
-
+          
           toast.success('Login successful!');
 
           // Navigate based on role

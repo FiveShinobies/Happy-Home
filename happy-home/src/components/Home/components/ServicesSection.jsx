@@ -2,8 +2,8 @@ import serviceHomeCleaning from "../../../assets/service3.jpg.jpeg";
 // import serviceDeepCleaning from "../../../assets/service-deep-cleaning.jpg";
 // import serviceMoveOut from "../../../assets/service-move-out.jpg";
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { Link } from "react-router-dom";
+import api from "../../../api/api";
 
 const base64ToImageSrc = (base64) => {
   if (!base64) return null;
@@ -24,7 +24,7 @@ const ServicesSection = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/services');
+        const response = await api.get('/services');
         // Limit to only 3 services
         setServices(response.data.slice(4, 7));
         console.log('Fetched services:', response.data);

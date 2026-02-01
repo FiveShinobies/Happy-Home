@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Save, X, CheckCircle } from 'lucide-react';
-import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
+import api from "../../api/api";
 
 const AddService = () => {
   const { id } = useParams();
@@ -31,9 +31,7 @@ const AddService = () => {
     const fetchCategories = async () => {
 
       try {
-        // Replace with your actual API endpoint
-        //const response = await axios.get(`http://localhost:8080/admin/services/${serviceId}`);
-        const response = await axios.get(`http://localhost:8080/services/categories`);
+        const response = await api.get(`/services/categories`);
         setCategories(response.data);
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -98,7 +96,7 @@ const AddService = () => {
         form.append('image', serviceImg);
       }
 
-      const response = await axios.post(`http://localhost:8080/admin/service/add`, form, {
+      const response = await api.post(`/admin/service/add`, form, {
       });
       setShowSuccess(true);
       setTimeout(() => {

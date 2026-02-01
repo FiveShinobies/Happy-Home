@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
+import api from "../../api/api";
 
 const AddressFormFields = ({ formData, onChange, errors , indianStates }) => (
     <>
@@ -255,8 +255,8 @@ const ConsumerProfile = () => {
   const fetchProfileData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        `http://localhost:8080/consumer/profile/${consumerId}`,
+      const response = await api.get(
+        `/consumer/profile/${consumerId}`,
       );
       console.log("✅ Profile data fetched:", response.data);
 
@@ -304,8 +304,8 @@ const ConsumerProfile = () => {
         languages: profileData.languages || [], // Include languages
       };
 
-      const response = await axios.put(
-        `http://localhost:8080/consumer/edit/${consumerId}`,
+      const response = await api.put(
+        `/consumer/edit/${consumerId}`,
         requestBody,
       );
 
@@ -331,8 +331,8 @@ const ConsumerProfile = () => {
     }
 
     try {
-      const response = await axios.request({
-        url: `http://localhost:8080/user/${consumerId}/password`,
+      const response = await api.request({
+        url: `/user/${consumerId}/password`,
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -388,8 +388,8 @@ const ConsumerProfile = () => {
     }
 
     try {
-      const response = await axios.post(
-        `http://localhost:8080/consumer/add-address/${consumerId}`,
+      const response = await api.post(
+        `/consumer/add-address/${consumerId}`,
         addressFormData,
       );
 
@@ -435,8 +435,8 @@ const ConsumerProfile = () => {
       const addressId = selectedAddress.addressId;
 
 
-      const response = await axios.put(
-        `http://localhost:8080/consumer/edit-address/${addressId}`,
+      const response = await api.put(
+        `/consumer/edit-address/${addressId}`,
         addressFormData,
       );
 
@@ -470,8 +470,8 @@ const ConsumerProfile = () => {
       // Backend expects /delete-address/{aid}
       const addressId = selectedAddress.addressId;
 
-      const response = await axios.delete(
-        `http://localhost:8080/consumer/delete-address/${addressId}`,
+      const response = await api.delete(
+        `/consumer/delete-address/${addressId}`,
       );
 
       console.log("✅ Address deleted:", response.data);

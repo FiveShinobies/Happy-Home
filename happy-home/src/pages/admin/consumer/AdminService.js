@@ -1,14 +1,11 @@
-import axios from "axios";
-
-const API_BASE_URL = 'http://localhost:8080';
-
+import api  from '../../../api/api';
 const adminService = {
   // ============== CONSUMER ENDPOINTS ==============
 
   // Fetch all consumers
   getAllConsumers: async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/admin/consumers`);
+      const response = await api.get(`/admin/consumers`);
       if (!response.data) {
         throw new Error('Failed to fetch consumers');
       }
@@ -22,7 +19,7 @@ const adminService = {
   // Fetch specific consumer details by ID
   getConsumerDetails: async (consumerId) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/admin/consumer/${consumerId}`);
+      const response = await api.get(`/admin/consumer/${consumerId}`);
       if (!response.data) {
         throw new Error('Failed to fetch consumer details');
       }
@@ -36,7 +33,7 @@ const adminService = {
   // Fetch all orders for a specific consumer
   getConsumerOrders: async (consumerId) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/consumer/${consumerId}/allOrders`);
+      const response = await api.get(`/consumer/${consumerId}/allOrders`);
       if (!response.data) {
         throw new Error('Failed to fetch consumer orders');
       }
@@ -52,7 +49,7 @@ const adminService = {
   // Fetch all vendors
   getAllVendors: async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/admin/vendors`);
+      const response = await api.get(`/admin/vendors`);
       if (!response.data) {
         throw new Error('Failed to fetch vendors');
       }
@@ -66,7 +63,7 @@ const adminService = {
   // Fetch specific vendor details by ID
   getVendorDetails: async (vendorId) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/admin/vendors/${vendorId}`);
+      const response = await api.get(`/admin/vendors/${vendorId}`);
       if (!response.data) {
         throw new Error('Failed to fetch vendor details');
       }
@@ -80,7 +77,7 @@ const adminService = {
   // Fetch all orders for a specific vendor
   getVendorOrders: async (vendorId) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/admin/vendors/${vendorId}/orders`);
+      const response = await api.get(`/admin/vendors/${vendorId}/orders`);
       if (!response.data) {
         throw new Error('Failed to fetch vendor orders');
       }
@@ -96,7 +93,7 @@ const adminService = {
   // Fetch specific order details by order ID
   getOrderDetails: async (orderId) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/order/${orderId}`);
+      const response = await api.get(`/order/${orderId}`);
       if (!response.data) {
         throw new Error('Failed to fetch order details');
       }

@@ -5,7 +5,7 @@ import {
   Package, Clock, CheckCircle, AlertCircle, CreditCard
 } from "lucide-react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import axios from "axios";
+import api from "../../../api/api";
 
 export default function ViewOrderDetail() {
   const { orderId } = useParams();
@@ -19,8 +19,8 @@ export default function ViewOrderDetail() {
   useEffect(() => {
     const fetchOrderDetails = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:8080/order/${orderId}`
+        const response = await api.get(
+          `/order/${orderId}`
         );
         console.log('Fetched order details:', response.data);
         setOrderData(response.data);

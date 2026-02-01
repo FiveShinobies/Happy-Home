@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { toast } from 'react-toastify';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import DEFAULT_PROFILE_PIC from '../../../assets/profileimg.png';
-
+import api from "../../../api/api";
 
 const byteArrayToImageUrl = (byteArray) => {
   if (!byteArray) return DEFAULT_PROFILE_PIC;
@@ -77,8 +76,8 @@ const EditVendorProfile = () => {
       setLoading(true);
 
       const [profileRes, bankingRes] = await Promise.all([
-        axios.get(`http://localhost:8080/vendor/${vendorId}/profile`),
-        axios.get(`http://localhost:8080/vendor/${vendorId}/banking`)
+        api.get(`/vendor/${vendorId}/profile`),
+        api.get(`/vendor/${vendorId}/banking`)
       ]);
 
       const profile = profileRes.data;
@@ -198,8 +197,8 @@ const EditVendorProfile = () => {
 
       console.log('Request Body:', requestBody);
 
-      await axios.put(
-        `http://localhost:8080/vendor/${vendorId}/profile`,
+      await api.put(
+        `/vendor/${vendorId}/profile`,
         requestBody
       );
 

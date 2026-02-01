@@ -7,8 +7,8 @@ import {
   ArrowUpRight, ArrowDownRight
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import axios from 'axios';
 import dayjs from 'dayjs';
+import api from '../../api/api';
 
 const VendorDashboard = () => {
   const vendorId = JSON.parse(sessionStorage.getItem('user')).userId;
@@ -28,7 +28,7 @@ const VendorDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:8080/vendor/dashboard/${vendorId}`);
+      const response = await api.get(`/vendor/dashboard/${vendorId}`);
       console.log('Dashboard Data:', response.data);
       setDashboardData(response.data);
       calculateStats(response.data);

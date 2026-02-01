@@ -1,15 +1,9 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { toast } from "react-toastify";
 import "./WorkDetails.css";
+import api from "../../api/api";
 
-/* =====================================================
-   🔥 WORKAROUND ADAPTER
-   Since backend doesn't return orderId, we'll:
-   1. Try to extract it from nested objects
-   2. Store the entire raw item for backend matching
-   3. Use alternative identification
-   ===================================================== */
+
 const adaptWorkRequests = (data) => {
   return data.map((item, index) => {
     // Try to find orderId in nested objects
@@ -101,8 +95,8 @@ const ViewWorkDetails = () => {
   };
 
   useEffect(() => {
-    axios
-      .get("http://localhost:8080/vendor/work")
+    api
+      .get("/vendor/work")
       .then((res) => {
         console.log("✅ Raw API Response:", res.data);
         setRawWorkData(res.data); // Store raw data
@@ -152,9 +146,9 @@ const ViewWorkDetails = () => {
 
       // APPROACH 1: If we have orderId, use original endpoint
       if (orderId) {
-        const apiUrl = `http://localhost:8080/vendor/work/${vendorId}/${orderId}`;
+        const apiUrl = `/vendor/work/${vendorId}/${orderId}`;
         console.log("🔍 Trying URL:", apiUrl);
-        response = await axios.post(apiUrl);
+        response = await api.post(apiUrl);
       } 
       
       console.log("✅ API Response:", response);
@@ -165,7 +159,7 @@ const ViewWorkDetails = () => {
         setSelectedRequest(null);
         
         // Refresh the list
-        const res = await axios.get("http://localhost:8080/vendor/work");
+        const res = await api.get("/vendor/work");
         setRawWorkData(res.data);
         setWorkRequests(adaptWorkRequests(res.data));
       }

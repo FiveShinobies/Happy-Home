@@ -8,8 +8,8 @@ import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
-import axios from 'axios';
 import dayjs from 'dayjs';
+import api from '../../api/api';
 
 const Dashboard = () => {
   const [timeRange, setTimeRange] = useState('7d');
@@ -34,7 +34,7 @@ const Dashboard = () => {
       setLoading(true);
       
       // Fetch from single admin dashboard endpoint
-      const response = await axios.get('http://localhost:8080/admin/dashboard');
+      const response = await api.get('/admin/dashboard');
       
       console.log('Admin Dashboard Data:', response.data);
       

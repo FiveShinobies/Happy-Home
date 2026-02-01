@@ -1,18 +1,18 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, Edit, Trash2, Package, Star, AlertCircle, CheckCircle2 } from "lucide-react";
-import axios from "axios";
 import service1 from "../../assets/service1.jpg";
 import service2 from "../../assets/service2.jpg";
 import service3 from "../../assets/service3.jpg";
 import service4 from "../../assets/service4.avif";
 import service5 from "../../assets/service5.avif";
+import api from "../../api/api";
 
 const imageData = [service1, service2, service3, service4, service5];
 
 export const getAllServices = async () => {
   try {
-    const response = await axios.get("http://localhost:8080/admin/services");
+    const response = await api.get("/admin/services");
     return response.data;
   } catch (error) {
     console.error("Error fetching services:", error);
@@ -53,7 +53,7 @@ function ServiceListing() {
   const handleDelete = async (id) => {
     setIsDeleting(true);
     try {
-      await axios.delete(`http://localhost:8080/admin/service/${id}`);
+      await api.delete(`/admin/service/${id}`);
       setShowDeleteConfirm(false);
       setShowDeleteSuccess(true);
       setTimeout(() => {

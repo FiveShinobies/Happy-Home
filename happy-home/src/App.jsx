@@ -7,7 +7,6 @@ import AllOrders from './pages/admin/AllOrders';
 import AllVendors from './pages/admin/AllVendors';
 import AllConsumers from './pages/admin/AllConsumers';
 import ConsumerHome from './pages/consumer/ConsumerHome';
-import Cart from './pages/consumer/Cart';
 import AboutUs from './pages/consumer/AboutUs';
 import ConsumerServiceListing from './pages/consumer/ServiceListing';
 import VendorDashboard from './pages/vendor/VendorDashboard';
@@ -97,8 +96,6 @@ function App() {
           <Route path='view-order-details' element={<ViewOrderDetails />} />
           <Route path='edit-order-details' element={<EditOrderDetails />} />
           <Route path='give-feedback' element={<GiveFeedback />} />
-{/* -------------------------------------------------------------------------------------- */}
-          <Route path='cart' element={<Cart />} />
 {/* -------------------------------------------------------------------------------------- */}
           <Route path='about-us' element={<AboutUs />} />
 {/* -------------------------------------------------------------------------------------- */}

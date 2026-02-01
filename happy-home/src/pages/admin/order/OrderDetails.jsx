@@ -12,7 +12,7 @@ import {
   Star
 } from 'lucide-react';
 import { get } from "react-hook-form";
-import axios from "axios";
+import api from "../../../api/api";
 
 export default function OrderDetails() {
   const { orderId } = useParams();
@@ -25,8 +25,7 @@ export default function OrderDetails() {
   useEffect(() => {
     const fetchOrderDetails = async () => {
       try {
-        // const response = await axios.get(`http://localhost:8080/order/${orderId}`);
-        const response = await axios.get(`http://localhost:8080/order/${orderId}`);
+        const response = await api.get(`/order/${orderId}`);
         const data = await response.data;
         setOrder(data);
         setLoading(false);
