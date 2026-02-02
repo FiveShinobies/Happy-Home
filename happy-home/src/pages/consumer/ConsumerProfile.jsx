@@ -19,147 +19,147 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import api from "../../api/api";
 
-const AddressFormFields = ({ formData, onChange, errors , indianStates }) => (
-    <>
-      <Form.Group className="mb-3">
-        <Form.Label
-          className="fw-semibold d-flex align-items-center gap-2"
-          style={{ color: "#1e293b" }}
-        >
-          <Home size={18} color="#1e40af" />
-          House/Flat Number <span style={{ color: "#EF4444" }}>*</span>
-        </Form.Label>
-        <Form.Control
-          type="text"
-          value={formData.homeNo}
-          onChange={(e) => onChange("homeNo", e.target.value)}
-          placeholder="e.g., A-101, Building 5"
-          isInvalid={!!errors.homeNo}
-          style={{
-            borderRadius: "8px",
-            border: "2px solid #e2e8f0",
-            padding: "0.75rem",
-          }}
-        />
-        <Form.Control.Feedback type="invalid">
-          {errors.homeNo}
-        </Form.Control.Feedback>
-      </Form.Group>
+const AddressFormFields = ({ formData, onChange, errors, indianStates }) => (
+  <>
+    <Form.Group className="mb-3">
+      <Form.Label
+        className="fw-semibold d-flex align-items-center gap-2"
+        style={{ color: "#1e293b" }}
+      >
+        <Home size={18} color="#1e40af" />
+        House/Flat Number <span style={{ color: "#EF4444" }}>*</span>
+      </Form.Label>
+      <Form.Control
+        type="text"
+        value={formData.homeNo}
+        onChange={(e) => onChange("homeNo", e.target.value)}
+        placeholder="e.g., A-101, Building 5"
+        isInvalid={!!errors.homeNo}
+        style={{
+          borderRadius: "8px",
+          border: "2px solid #e2e8f0",
+          padding: "0.75rem",
+        }}
+      />
+      <Form.Control.Feedback type="invalid">
+        {errors.homeNo}
+      </Form.Control.Feedback>
+    </Form.Group>
 
-      <Form.Group className="mb-3">
-        <Form.Label
-          className="fw-semibold d-flex align-items-center gap-2"
-          style={{ color: "#1e293b" }}
-        >
-          <Building2 size={18} color="#1e40af" />
-          Area/Town <span style={{ color: "#EF4444" }}>*</span>
-        </Form.Label>
-        <Form.Control
-          type="text"
-          value={formData.town}
-          onChange={(e) => onChange("town", e.target.value)}
-          placeholder="e.g., Koramangala"
-          isInvalid={!!errors.town}
-          style={{
-            borderRadius: "8px",
-            border: "2px solid #e2e8f0",
-            padding: "0.75rem",
-          }}
-        />
-        <Form.Control.Feedback type="invalid">
-          {errors.town}
-        </Form.Control.Feedback>
-      </Form.Group>
+    <Form.Group className="mb-3">
+      <Form.Label
+        className="fw-semibold d-flex align-items-center gap-2"
+        style={{ color: "#1e293b" }}
+      >
+        <Building2 size={18} color="#1e40af" />
+        Area/Town <span style={{ color: "#EF4444" }}>*</span>
+      </Form.Label>
+      <Form.Control
+        type="text"
+        value={formData.town}
+        onChange={(e) => onChange("town", e.target.value)}
+        placeholder="e.g., Koramangala"
+        isInvalid={!!errors.town}
+        style={{
+          borderRadius: "8px",
+          border: "2px solid #e2e8f0",
+          padding: "0.75rem",
+        }}
+      />
+      <Form.Control.Feedback type="invalid">
+        {errors.town}
+      </Form.Control.Feedback>
+    </Form.Group>
 
-      <div className="row">
-        <div className="col-md-6">
-          <Form.Group className="mb-3">
-            <Form.Label
-              className="fw-semibold d-flex align-items-center gap-2"
-              style={{ color: "#1e293b" }}
-            >
-              <Navigation size={18} color="#1e40af" />
-              City <span style={{ color: "#EF4444" }}>*</span>
-            </Form.Label>
-            <Form.Control
-              type="text"
-              value={formData.city}
-              onChange={(e) => onChange("city", e.target.value)}
-              placeholder="e.g., Bangalore"
-              isInvalid={!!errors.city}
-              style={{
-                borderRadius: "8px",
-                border: "2px solid #e2e8f0",
-                padding: "0.75rem",
-              }}
-            />
-            <Form.Control.Feedback type="invalid">
-              {errors.city}
-            </Form.Control.Feedback>
-          </Form.Group>
-        </div>
-
-        <div className="col-md-6">
-          <Form.Group className="mb-3">
-            <Form.Label
-              className="fw-semibold d-flex align-items-center gap-2"
-              style={{ color: "#1e293b" }}
-            >
-              <Map size={18} color="#1e40af" />
-              State <span style={{ color: "#EF4444" }}>*</span>
-            </Form.Label>
-            <Form.Select
-              value={formData.state}
-              onChange={(e) => onChange("state", e.target.value)}
-              isInvalid={!!errors.state}
-              style={{
-                borderRadius: "8px",
-                border: "2px solid #e2e8f0",
-                padding: "0.75rem",
-              }}
-            >
-              <option value="">Select State</option>
-              {indianStates.map((state) => (
-                <option key={state} value={state}>
-                  {state}
-                </option>
-              ))}
-            </Form.Select>
-            <Form.Control.Feedback type="invalid">
-              {errors.state}
-            </Form.Control.Feedback>
-          </Form.Group>
-        </div>
+    <div className="row">
+      <div className="col-md-6">
+        <Form.Group className="mb-3">
+          <Form.Label
+            className="fw-semibold d-flex align-items-center gap-2"
+            style={{ color: "#1e293b" }}
+          >
+            <Navigation size={18} color="#1e40af" />
+            City <span style={{ color: "#EF4444" }}>*</span>
+          </Form.Label>
+          <Form.Control
+            type="text"
+            value={formData.city}
+            onChange={(e) => onChange("city", e.target.value)}
+            placeholder="e.g., Bangalore"
+            isInvalid={!!errors.city}
+            style={{
+              borderRadius: "8px",
+              border: "2px solid #e2e8f0",
+              padding: "0.75rem",
+            }}
+          />
+          <Form.Control.Feedback type="invalid">
+            {errors.city}
+          </Form.Control.Feedback>
+        </Form.Group>
       </div>
 
-      <Form.Group className="mb-3">
-        <Form.Label
-          className="fw-semibold d-flex align-items-center gap-2"
-          style={{ color: "#1e293b" }}
-        >
-          <MapPin size={18} color="#1e40af" />
-          Pincode <span style={{ color: "#EF4444" }}>*</span>
-        </Form.Label>
-        <Form.Control
-          type="text"
-          value={formData.pincode}
-          onChange={(e) => onChange("pincode", e.target.value)}
-          placeholder="e.g., 560001"
-          maxLength={6}
-          isInvalid={!!errors.pincode}
-          style={{
-            borderRadius: "8px",
-            border: "2px solid #e2e8f0",
-            padding: "0.75rem",
-          }}
-        />
-        <Form.Control.Feedback type="invalid">
-          {errors.pincode}
-        </Form.Control.Feedback>
-        <Form.Text className="text-muted">Enter 6-digit postal code</Form.Text>
-      </Form.Group>
-    </>
-  );
+      <div className="col-md-6">
+        <Form.Group className="mb-3">
+          <Form.Label
+            className="fw-semibold d-flex align-items-center gap-2"
+            style={{ color: "#1e293b" }}
+          >
+            <Map size={18} color="#1e40af" />
+            State <span style={{ color: "#EF4444" }}>*</span>
+          </Form.Label>
+          <Form.Select
+            value={formData.state}
+            onChange={(e) => onChange("state", e.target.value)}
+            isInvalid={!!errors.state}
+            style={{
+              borderRadius: "8px",
+              border: "2px solid #e2e8f0",
+              padding: "0.75rem",
+            }}
+          >
+            <option value="">Select State</option>
+            {indianStates.map((state) => (
+              <option key={state} value={state}>
+                {state}
+              </option>
+            ))}
+          </Form.Select>
+          <Form.Control.Feedback type="invalid">
+            {errors.state}
+          </Form.Control.Feedback>
+        </Form.Group>
+      </div>
+    </div>
+
+    <Form.Group className="mb-3">
+      <Form.Label
+        className="fw-semibold d-flex align-items-center gap-2"
+        style={{ color: "#1e293b" }}
+      >
+        <MapPin size={18} color="#1e40af" />
+        Pincode <span style={{ color: "#EF4444" }}>*</span>
+      </Form.Label>
+      <Form.Control
+        type="text"
+        value={formData.pincode}
+        onChange={(e) => onChange("pincode", e.target.value)}
+        placeholder="e.g., 560001"
+        maxLength={6}
+        isInvalid={!!errors.pincode}
+        style={{
+          borderRadius: "8px",
+          border: "2px solid #e2e8f0",
+          padding: "0.75rem",
+        }}
+      />
+      <Form.Control.Feedback type="invalid">
+        {errors.pincode}
+      </Form.Control.Feedback>
+      <Form.Text className="text-muted">Enter 6-digit postal code</Form.Text>
+    </Form.Group>
+  </>
+);
 
 const ConsumerProfile = () => {
   const [activeTab, setActiveTab] = useState("personal");
@@ -315,7 +315,17 @@ const ConsumerProfile = () => {
       fetchProfileData();
     } catch (error) {
       console.error("❌ Error updating profile:", error);
-      toast.error(error.response?.data?.message || "Failed to update profile");
+
+      const data = error.response?.data;
+
+      if (data?.errors && Array.isArray(data.errors)) {
+        // show each validation error
+        data.errors.forEach((err) => {
+          toast.error(err.defaultMessage);
+        });
+      } else {
+        toast.error(data?.message || "Failed to update profile");
+      }
     }
   };
 
@@ -1037,7 +1047,7 @@ const ConsumerProfile = () => {
     </div>
   );
 
-  
+
   return (
     <Container
       fluid
