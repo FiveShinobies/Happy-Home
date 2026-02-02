@@ -3,12 +3,38 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Star, MapPin, Clock, Package, ArrowLeft, Phone, CheckCircle, Trash2Icon, TrashIcon, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import service1 from "../../../assets/service1.jpg";
-import service2 from "../../../assets/service2.jpg";
-import service3 from "../../../assets/service3.jpg";
-import service4 from "../../../assets/service4.avif";
+import service1 from "../../../assets/service4.avif";
 import { toast } from "react-toastify";
 import api from "../../../api/api";
+
+// Default fallback image
+const defaultServiceImage = service1;
+
+// Helper function to convert base64 to image source
+const base64ToImageSrc = (base64) => {
+  if (!base64) return null;
+  const mimeType = base64.startsWith("iVBOR") ? "image/png" : "image/jpeg";
+  return `data:${mimeType};base64,${base64}`;
+};
+
+// Helper function to get valid images from service
+const getServiceImages = (service) => {
+  if (!service || !Array.isArray(service.images)) {
+    return [defaultServiceImage];
+  }
+
+  // Filter out null images and convert base64 to data URLs
+  const validImages = service.images
+    .filter(img => img !== null)
+    .map(img => base64ToImageSrc(img));
+
+  // If no valid images, return default
+  if (validImages.length === 0) {
+    return [defaultServiceImage];
+  }
+
+  return validImages;
+};
 
 const ServiceDetailsAdmin = () => {
   const { id } = useParams();
@@ -310,11 +336,8 @@ const ServiceDetailsAdmin = () => {
     );
   }
 
-  // Prepare images array (use provided images or show placeholder)
-  // const images = service.images && service.images.length > 0
-  //   ? service.images
-  //   : [image1, image2];
-  const images = [service2, service1, service3];
+  // Get images for the service
+  const images = getServiceImages(service);
 
   return (
     <div style={styles.pageBackground}>
@@ -425,15 +448,15 @@ const ServiceDetailsAdmin = () => {
             {/* Image Gallery */}
             <div style={styles.card}>
               <div style={styles.imageContainer}>
-                {images.length > 0 ? (
-                  <img
-                    src={images[selectedImage]}
-                    alt={service.serviceName}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                ) : (
-                  <Package size={80} style={{ color: '#1e40af', opacity: 0.3 }} />
-                )}
+                <img
+                  src={images[selectedImage]}
+                  alt={service.serviceName}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e) => {
+                    // Fallback if image fails to load
+                    e.target.src = defaultServiceImage;
+                  }}
+                />
 
                 {/* Category Badge */}
                 <div style={styles.categoryBadge}>
@@ -466,6 +489,9 @@ const ServiceDetailsAdmin = () => {
                         onClick={() => setSelectedImage(idx)}
                         onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
                         onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+                        onError={(e) => {
+                          e.target.src = defaultServiceImage;
+                        }}
                       />
                     ))}
                   </div>
@@ -633,7 +659,6 @@ const ServiceDetailsAdmin = () => {
 
                 <hr style={{ borderColor: '#e0e0e0' }} />
 
-
                 <button
                   style={styles.bookBtn}
                   onMouseOver={(e) => e.target.style.background = '#1e3a8a'}
@@ -642,7 +667,6 @@ const ServiceDetailsAdmin = () => {
                 >
                   Edit Service
                 </button>
-
 
                 <button
                   style={styles.outlineBtn}
@@ -653,7 +677,7 @@ const ServiceDetailsAdmin = () => {
                   }}
                   onMouseOut={(e) => {
                     e.target.style.background = '#ffffff';
-                    e.target.style.color = '#af1e3b';
+                    e.target.style.color = '#af1e1e';
                   }}
                   onClick={() => setShowDeleteConfirm(true)}
                 >
