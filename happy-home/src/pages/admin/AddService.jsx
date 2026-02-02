@@ -53,16 +53,33 @@ const AddService = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.name.trim()) newErrors.name = 'Service name is required';
-    if (!formData.description.trim()) newErrors.description = 'Short description is required';
-    if (!formData.fullDescription.trim()) newErrors.fullDescription = 'Full description is required';
-    if (!formData.price) {
-      newErrors.price = 'Price is required';
-    } else if (parseFloat(formData.price) <= 0) {
-      newErrors.price = 'Price must be greater than 0';
+    if (!formData.name.trim()) {
+      newErrors.name = "Service name is required";
+    } else if (formData.name.length < 3 || formData.name.length > 100) {
+      newErrors.name = "Service name must be 3–100 characters";
     }
-    if (!formData.category) newErrors.category = 'Category is required';
 
+    if (!formData.description.trim()) {
+      newErrors.description = "Short description is required";
+    } else if (formData.description.length > 255) {
+      newErrors.description = "Short description must be under 255 characters";
+    }
+
+    if (!formData.fullDescription.trim()) {
+      newErrors.fullDescription = "Long description is required";
+    } else if (formData.fullDescription.length < 10) {
+      newErrors.fullDescription = "Long description must be at least 10 characters";
+    }
+
+    if (!formData.price) {
+      newErrors.price = "Price is required";
+    } else if (parseFloat(formData.price) < 10) {
+      newErrors.price = "Price must be at least ₹10";
+    }
+
+    if (!formData.category) {
+      newErrors.category = "Category is required";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -103,8 +120,24 @@ const AddService = () => {
         navigate('/admin-home/service-listing');
       }, 1500);
     } catch (error) {
-      console.error('Error creating service:', error);
-      setShowError(true);
+      console.error("Error creating service:", error);
+
+      const data = error.response?.data;
+
+      if (data?.errors && Array.isArray(data.errors)) {
+        const fieldErrors = {};
+
+        data.errors.forEach((err) => {
+          const uiField = backendFieldMap[err.field] || err.field;
+          fieldErrors[uiField] = err.defaultMessage;
+        });
+
+        setErrors(fieldErrors);
+        setShowError(true);
+      } else {
+        setShowError(true);
+      }
+
       setTimeout(() => setShowError(false), 3000);
     } finally {
       setLoading(false);

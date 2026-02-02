@@ -149,8 +149,24 @@ const EditService = () => {
         navigate('/admin-home/service-listing');
       }, 1500);
     } catch (error) {
-      console.error('Error updating service:', error);
-      setShowError(true);
+      console.error("Error updating service:", error);
+
+      const data = error.response?.data;
+
+      if (data?.errors && Array.isArray(data.errors)) {
+        const fieldErrors = {};
+
+        data.errors.forEach((err) => {
+          const uiField = backendFieldMap[err.field] || err.field;
+          fieldErrors[uiField] = err.defaultMessage;
+        });
+
+        setErrors(fieldErrors);
+        setShowError(true);
+      } else {
+        setShowError(true);
+      }
+
       setTimeout(() => setShowError(false), 3000);
     } finally {
       setLoading(false);
