@@ -7,6 +7,8 @@ import {
   ArrowRight, DollarSign
 } from 'lucide-react';
 
+import api from '../../api/api';
+
 const AdminCompactDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,13 +23,13 @@ const AdminCompactDashboard = () => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('http://localhost:8080/admin/dashboard');
+      const response = await api.get('/admin/dashboard');
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.data) {
+        throw new Error('Failed to fetch dashboard data');
       }
       
-      const data = await response.json();
+      const data = response.data;
       setDashboardData(data);
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
