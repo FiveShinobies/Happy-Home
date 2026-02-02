@@ -10,6 +10,31 @@ import api from "../../api/api";
 
 const imageData = [service1, service2, service3, service4, service5];
 
+// Default fallback image - 
+const defaultServiceImage = service4; // or create a specific default image
+
+// Helper function to convert base64 to image source
+const base64ToImageSrc = (base64) => {
+  if (!base64) return null;
+  const mimeType = base64.startsWith("iVBOR") ? "image/png" : "image/jpeg";
+  return `data:${mimeType};base64,${base64}`;
+};
+
+// Helper function to get first valid image from array
+const getFirstValidImage = (images) => {
+  if (!Array.isArray(images)) return null;
+  return images.find(img => img);
+};
+
+// Helper function to get service image with fallback
+const getServiceImage = (service) => {
+  const imageBase64 = getFirstValidImage(service.serviceImages);
+  if (imageBase64) {
+    return base64ToImageSrc(imageBase64);
+  }
+  return defaultServiceImage;
+};
+
 export const getAllServices = async () => {
   try {
     const response = await api.get("/admin/services");
@@ -75,10 +100,6 @@ function ServiceListing() {
       </div>
     );
   }
-
-  let min = 1;
-  let max = 5;
-  let random = Math.floor(Math.random() * (max - min + 1)) + min;
 
   const styles = {
     modalOverlay: {
@@ -240,6 +261,7 @@ function ServiceListing() {
           </div>
         </div>
       )}
+
       {/* Header */}
       <div
         style={{
@@ -312,13 +334,16 @@ function ServiceListing() {
                     }}
                   >
                     <img
-                      src={service[`serviceImage${random}`] || imageData[service.serviceID % imageData.length]}
-
+                      src={getServiceImage(service)}
                       alt={service.serviceName}
                       style={{
                         width: "100%",
                         height: "100%",
                         objectFit: "cover",
+                      }}
+                      onError={(e) => {
+                        // Fallback if image fails to load
+                        e.target.src = defaultServiceImage;
                       }}
                     />
 

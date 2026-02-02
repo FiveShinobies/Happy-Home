@@ -10,8 +10,32 @@ import service5 from "../../assets/service5.avif";
 import service6 from "../../assets/service6.avif";
 import api from "../../api/api";
 
-const imageData =
-  [service1, service2, service3, service4, service5, service6];
+const imageData = [service1, service2, service3, service4, service5, service6];
+
+// Default fallback image
+const defaultServiceImage = service1;
+
+// Helper function to convert base64 to image source
+const base64ToImageSrc = (base64) => {
+  if (!base64) return null;
+  const mimeType = base64.startsWith("iVBOR") ? "image/png" : "image/jpeg";
+  return `data:${mimeType};base64,${base64}`;
+};
+
+// Helper function to get first valid image from array
+const getFirstValidImage = (images) => {
+  if (!Array.isArray(images)) return null;
+  return images.find(img => img);
+};
+
+// Helper function to get service image with fallback
+const getServiceImage = (service) => {
+  const imageBase64 = getFirstValidImage(service.serviceImages);
+  if (imageBase64) {
+    return base64ToImageSrc(imageBase64);
+  }
+  return defaultServiceImage;
+};
 
 const ConsumerServicesListing = () => {
   const [services, setServices] = useState([]);
@@ -26,27 +50,11 @@ const ConsumerServicesListing = () => {
   const servicesPerPage = 6;
   const navigate = useNavigate();
 
-  // Service categories based on backend enum
-  // const categories = [
-  //   "CLEANING",
-  //   "REPAIR",
-  //   "GARDENING",
-  //   "PLUMBLING",
-  //   "ELECTRICAL",
-  //   "BEAUTYANDWELLNESS",
-  //   "SPA"
-  // ];
-
-  let min = 1;
-  let max = imageData.length - 1;
-  let random = Math.floor(Math.random() * (max - min + 1)) + min;
-
-
   // Fetch services from backend
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await api.get('/services'); // Update with actual endpoint
+        const response = await api.get('/services');
         const categoryResponse = await api.get('/services/categories');
         setServices(response.data);
         setCategories(["ALL", ...categoryResponse.data]);
@@ -173,7 +181,8 @@ const ConsumerServicesListing = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      borderBottom: '1px solid #e0e0e0'
+      borderBottom: '1px solid #e0e0e0',
+      position: 'relative'
     },
     filterCard: {
       borderRadius: '1rem',
@@ -369,17 +378,19 @@ const ConsumerServicesListing = () => {
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
-                {/* Image Placeholder */}
+                {/* Service Image */}
                 <div style={styles.serviceImage}>
-                  {imageData.length > 0 || (service.serviceImages && service.serviceImages.length) > 0 ? (
-                    <img
-                      src={imageData[Math.floor(Math.random() * (max - min + 1)) + min]}
-                      alt={service.serviceName}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <Package size={48} style={{ color: '#1e40af', opacity: 0.3 }} />
-                  )}
+                  <img
+                    src={getServiceImage(service)}
+                    alt={service.serviceName}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={(e) => {
+                      // Fallback if image fails to load
+                      e.target.src = defaultServiceImage;
+                    }}
+                  />
+
+                  {/* Category Badge */}
                   <div
                     className="position-absolute top-0 end-0 m-2"
                     style={{
@@ -393,6 +404,8 @@ const ConsumerServicesListing = () => {
                   >
                     {getCategoryIcon(service.category)} {formatCategoryName(service.category)}
                   </div>
+
+                  {/* Rating Badge */}
                   {service.rating > 0 && (
                     <div
                       className="position-absolute top-0 start-0 m-2"
