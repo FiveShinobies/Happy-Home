@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://44.210.134.103",
+  baseURL: "http://3.234.214.14",
 });
 
 // 🔑 REQUEST INTERCEPTOR (TOKEN ATTACHED HERE)
