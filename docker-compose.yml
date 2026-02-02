@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8
+    container_name: happyhome-mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: happyhome
+      MYSQL_USER: D3_92602_Amol
+      MYSQL_PASSWORD: manager
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  backend:
+    build: ./happyhome-server
+    container_name: happyhome-backend
+    depends_on:
+      - mysql
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: D3_92602_Amol
+      DB_PASS: manager
+      JWT_SECRET: acvhnanvavnioqvnijvaj_vanv_qavnqovnqoivnqoivn_qvbjqbvqjabv
+      RAZORPAY_KEY_ID: rzp_test_S7bivnJVMPGoc0
+      RAZORPAY_KEY_SECRET: mUo2vpaac1o7dAhe4FK3dqOU
+
+  frontend:
+    build: ./happy-home
+    container_name: happyhome-frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  mysql_data:
