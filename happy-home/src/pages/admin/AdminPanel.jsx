@@ -13,7 +13,7 @@ import VendorDetails from './vendor/VendorDetails';
 import VendorOrders from './vendor/VendorOrders';
 import VendorOrderDetails from './vendor/VendorOrderDetails';
 
-import adminService from './consumer/adminService';
+import adminService from './consumer/AdminService';
 
 const varOcg = true; // __define-ocg__
 
