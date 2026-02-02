@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { toast } from "react-toastify";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-
+import api from '../../../api/api';
 dayjs.extend(relativeTime);
 
 const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
@@ -51,8 +50,8 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
 
       console.log("📡 Fetching orders from:", `/admin/vendors/${id}/orders`);
 
-      const response = await axios.get(
-        `http://localhost:8080/admin/vendors/${id}/orders`
+      const response = await api.get(
+        `/admin/vendors/${id}/orders`
       );
 
       console.log("📦 API Response:", response.data);
@@ -78,8 +77,8 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
       setDetailLoading(true);
       console.log("📡 Fetching order details for ID:", orderId);
 
-      const response = await axios.get(
-        `http://localhost:8080/vendor/details/${orderId}`
+      const response = await api.get(
+        `/vendor/details/${orderId}`
       );
 
       console.log("📦 Order Details Response:", response.data);
@@ -103,8 +102,8 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
       const oid = selectedOrder.orderId;
       console.log("🚀 Starting service for order:", oid);
 
-      const response = await axios.patch(
-        `http://localhost:8080/order/in-progress/${oid}`
+      const response = await api.patch(
+        `/order/in-progress/${oid}`
       );
 
       console.log("✅ Service started successfully:", response.data);
@@ -123,8 +122,8 @@ const VendorAssignedOrders = ({ vendorId: propVendorId }) => {
       const oid = selectedOrder.orderId;
       console.log("✅ Completing service for order:", oid);
 
-      const response = await axios.patch(
-        `http://localhost:8080/order/completed/${oid}`
+      const response = await api.patch(
+        `/order/completed/${oid}`
       );
 
       console.log("✅ Service completed successfully:", response.data);
