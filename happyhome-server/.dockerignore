@@ -1,0 +1,72 @@
+# Maven
+target/
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle (if used)
+.gradle/
+build/
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# VS Code
+.vscode/
+
+# STS
+.apt_generated
+.factorypath
+.springBeans
+.sts4-cache
+
+# Logs
+*.log
+logs/
+hs_err_pid*.log
+replay_pid*.log
+
+# Runtime data
+pids/
+*.pid
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git/
+.gitattributes
+.gitignore
+
+# Documentation
+HELP.md
+README.md
+*.md
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+
+# Temporary files
+*.tmp
+*.bak

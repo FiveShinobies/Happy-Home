@@ -1,0 +1,48 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env*
+!.env.example
+
+# Temporary files
+*.tmp
+*.bak
+*.temp
+
+# Build artifacts (if any at root)
+build/
+dist/
+
+# Docker
+docker-compose.override.yml
+
+# Git
+.git/
+
+# Documentation (if duplicated)
+*.pdf
+*.docx

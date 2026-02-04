@@ -44,10 +44,22 @@ services:
       - "80:80"
     restart: always
 
+    # -------------------- MongoDB (Notification Service) --------------------
+  mongo-notification:
+    image: mongo:7
+    container_name: happyhome-mongo-notification
+    restart: always
+    volumes:
+      - mongo_notification_data:/data/db
+    ports:
+      - "27017:27017"
+
   # -------------------- Notification Service (.NET 8) --------------------
   notification-service:
     build: ./NotificationService/NotificationService
     container_name: happyhome-notification
+    depends_on:
+      - mongo-notification
     ports:
       - "5253:5253"
     environment:
@@ -57,3 +69,4 @@ services:
 # -------------------- Volumes --------------------
 volumes:
   mysql_data:
+  mongo_notification_data:
