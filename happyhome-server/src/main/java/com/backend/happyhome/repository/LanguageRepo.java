@@ -13,9 +13,6 @@ public interface LanguageRepo extends JpaRepository<Language, Long> {
 
 	List<Language> findByUsersUserId(Long userId);
 	List<Language> findByLangNameIn(Set<String> langNames);
-	
-
-	
 	Optional<Language> findByLangName(String langName);
 
 }

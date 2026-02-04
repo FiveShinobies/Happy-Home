@@ -5,7 +5,6 @@ import java.util.Map;
 
 import org.apache.commons.codec.digest.HmacUtils;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,6 +16,7 @@ import com.backend.happyhome.dtos.RazorpayPaymentDTOA;
 import com.backend.happyhome.dtos.consumer_dto.VerifyPaymentRequestDTO;
 import com.backend.happyhome.entities.ConsumerTransaction;
 import com.backend.happyhome.entities.enums.TransactionStatus;
+import com.backend.happyhome.service.NotificationService;
 import com.backend.happyhome.service.OrderServiceImpl;
 import com.backend.happyhome.service.User_service.RazorpayService;
 import com.backend.happyhome.service.consumer_service.ConsumerTransactionServiceImpl;
@@ -36,6 +36,8 @@ public class PaymentController {
 	private final OrderServiceImpl orderService;
 	
 	private final ConsumerTransactionServiceImpl ctService;
+	
+	private final NotificationService notificationService;
 	
 	@PostMapping("/create-order")
 	public ResponseEntity<Map<String , Object>> createOrder(@RequestParam double amount, @RequestParam String currency , @RequestParam Long cid ) throws RazorpayException 
@@ -79,7 +81,23 @@ public class PaymentController {
 			 ct.setTimestamp(LocalDateTime.now());
 			
 			 com.backend.happyhome.entities.Order odrU = ctService.addTrasaction(ct);
-			 	
+			 
+			 String subject = "Payment Successful – Your Order Has Been Confirmed";
+
+			 String message =
+			         "Hi,\n\n" +
+			         "Your payment has been successfully verified and your order has been placed.\n\n" +
+			         "Order Details:\n" +
+			         "Order ID: " + razorpayResponse.getRazorpayOrderId() + "\n" +
+			         "Payment ID: " + razorpayResponse.getRazorpayPaymentId() + "\n" +
+			         "Amount Paid: ₹" + newOrder.getOrderPrice() + "\n\n" +
+			         "Thank you for shopping with HappyHome.\n" +
+			         "We are processing your order and will notify you once it is shipped.\n\n" +
+			         "Regards,\n" +
+			         "HappyHome Team";
+			 
+			 notificationService.sendEmail(odrU.getMyConsumer().getMyUser().getEmail(), subject , message);
+			 
 			 return ResponseEntity.ok("order placed successfully");
 			 
 			 

@@ -18,6 +18,7 @@ import com.backend.happyhome.dtos.vendor_dto.VendorDashboardDTOA;
 import com.backend.happyhome.entities.Address;
 import com.backend.happyhome.entities.ConsumerTransaction;
 import com.backend.happyhome.entities.Order;
+import com.backend.happyhome.entities.User;
 import com.backend.happyhome.entities.Vendor;
 import com.backend.happyhome.entities.VendorReview;
 import com.backend.happyhome.entities.VendorTransaction;
@@ -43,6 +44,7 @@ public class VendorServiceImpl implements VendorService{
 	private final ConsumerTransactionRepo ctRepo;
 	private final VendorTransactionRepo vtRepo;
 	private final VendorWalletRepo vwRepo;
+	private final NotificationService notificationService;
 	
 	@Override
 	public boolean acceptRequest(Long oId, Long vId) throws OrderDoesNotExist{
@@ -102,8 +104,31 @@ public class VendorServiceImpl implements VendorService{
 		
 		VendorWallet vw = vwRepo.findByMyVendorVendorId(v.getVendorId()); 
 		vw.setBalance( vw.getBalance() + vt.getAmount());
-				
-		return (vwRepo.save(vw) != null);
+		boolean result = (vwRepo.save(vw) != null);
+		
+		User user = v.getMyUser();
+		
+		if(result) {
+			
+			String subject = "Payment Credited to Your Wallet";
+			String message =
+			        "Hello " + user.getFirstName() + " " + user.getLastName() + ",\n\n" +
+			        "We’re happy to inform you that a payment has been successfully credited to your vendor wallet.\n\n" +
+			        "Transaction Details:\n" +
+			        "Order ID: " + o.getOrderId() + "\n" +
+			        "Credited Amount: ₹" + vt.getAmount() + "\n" +
+			        "Date & Time: " + vt.getTimestamp() + "\n\n" +
+			        "This amount is now available in your wallet and can be viewed from your vendor dashboard.\n\n" +
+			        "If you have any questions, feel free to contact our support team.\n\n" +
+			        "Thank you for partnering with us.\n\n" +
+			        "Regards,\n" +
+			        "HappyHome Team";
+			
+			notificationService.sendEmail(user.getEmail(), subject, message);
+			
+		}
+		
+		return result;
 	}
 
 	@Override

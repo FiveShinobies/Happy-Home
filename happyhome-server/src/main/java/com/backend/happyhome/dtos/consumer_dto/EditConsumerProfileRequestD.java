@@ -21,9 +21,11 @@ public class EditConsumerProfileRequestD {
     @NotBlank(message = "Email is required")
     private String email;
 
+    @Size(min = 10, max = 10, message = "Mobile number must be exactly 10 digits")
     @Pattern(
         regexp = "^[6-9][0-9]{9}$",
         message = "Invalid Indian mobile number"
+        
     )
     private String phoneNumber;
 

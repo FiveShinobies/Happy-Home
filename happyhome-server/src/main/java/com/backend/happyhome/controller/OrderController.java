@@ -46,7 +46,7 @@ public class OrderController {
 		orderService.updateStatusToCompleted(oid);
 		
 		vendorService.payVendor(oid);
-		
+		 
 		return ResponseEntity.ok("Status updated to Completed and money added to vendor wallet");
 	}
 

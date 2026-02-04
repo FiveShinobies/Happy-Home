@@ -26,7 +26,6 @@ public class LoggingAspect {
 
 	private static final Logger log = LoggerFactory.getLogger(LoggingAspect.class);
 	private static final int MAX_ERROR_LENGTH = 1000;
-
 	
 	@Autowired
 	private HttpServletRequest request;
