@@ -8,10 +8,16 @@ target/
 .apt_generated
 .classpath
 .factorypath
+.metadata/
 .project
 .settings
 .springBeans
 .sts4-cache
+
+### Logs ###
+*.log
+hs_err_pid*.log
+replay_pid*.log
 
 ### IntelliJ IDEA ###
 .idea
