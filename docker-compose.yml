@@ -1,6 +1,7 @@
 version: "3.8"
 
 services:
+  # -------------------- MySQL --------------------
   mysql:
     image: mysql:8
     container_name: happyhome-mysql
@@ -12,7 +13,10 @@ services:
       MYSQL_ROOT_PASSWORD: root
     volumes:
       - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
 
+  # -------------------- Backend (Spring Boot) --------------------
   backend:
     build: ./happyhome-server
     container_name: happyhome-backend
@@ -28,7 +32,9 @@ services:
       JWT_SECRET: acvhnanvavnioqvnijvaj_vanv_qavnqovnqoivnqoivn_qvbjqbvqjabv
       RAZORPAY_KEY_ID: rzp_test_S7bivnJVMPGoc0
       RAZORPAY_KEY_SECRET: mUo2vpaac1o7dAhe4FK3dqOU
+    restart: always
 
+  # -------------------- Frontend (React + Nginx) --------------------
   frontend:
     build: ./happy-home
     container_name: happyhome-frontend
@@ -36,6 +42,18 @@ services:
       - backend
     ports:
       - "80:80"
+    restart: always
 
+  # -------------------- Notification Service (.NET 8) --------------------
+  notification-service:
+    build: ./NotificationService/NotificationService
+    container_name: happyhome-notification
+    ports:
+      - "5253:5253"
+    environment:
+      ASPNETCORE_URLS: http://+:5253
+    restart: always
+
+# -------------------- Volumes --------------------
 volumes:
   mysql_data:
