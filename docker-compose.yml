@@ -38,16 +38,25 @@ services:
 
   # -------------------- Frontend (React + Nginx) --------------------
   frontend:
-    build:
-      context: ./happy-home        # ✅ CORRECT
-      dockerfile: Dockerfile
-     
+    image: 23amol08/happy-home-frontend:latest
     container_name: happyhome-frontend
     depends_on:
       - backend
     ports:
       - "80:80"
     restart: always
+
+  # frontend:
+  #   build:
+  #     context: ./happy-home        # ✅ CORRECT
+  #     dockerfile: Dockerfile
+     
+  #   container_name: happyhome-frontend
+  #   depends_on:
+  #     - backend
+  #   ports:
+  #     - "80:80"
+  #   restart: always
 
   # -------------------- MongoDB --------------------
   mongo-notification:
