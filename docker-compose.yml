@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # -------------------- MySQL --------------------
   mysql:
@@ -14,29 +12,36 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     ports:
-      - "3306:3306"
+      - "3306:3306"   # optional (for Workbench)
 
   # -------------------- Backend (Spring Boot) --------------------
   backend:
-    build: ./happyhome-server
+    image: 23amol08/happy-home-backend:latest
     container_name: happyhome-backend
     depends_on:
       - mysql
     ports:
       - "8080:8080"
     environment:
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USER: D3_92602_Amol
-      DB_PASS: manager
-      JWT_SECRET: acvhnanvavnioqvnijvaj_vanv_qavnqovnqoivnqoivn_qvbjqbvqjabv
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/happyhome?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: D3_92602_Amol
+      SPRING_DATASOURCE_PASSWORD: manager
+
+      JWT_SECRET: acvhnanvavnioqvnijvaj vanv qavnqovnqoivnqoivn qvbjqbvqjabv;
+      JWT_EXPIRATION: 86400000
+
       RAZORPAY_KEY_ID: rzp_test_S7bivnJVMPGoc0
       RAZORPAY_KEY_SECRET: mUo2vpaac1o7dAhe4FK3dqOU
+
+      NOTIFICATION_SERVICE_URL: http://notification-service:5253
     restart: always
 
   # -------------------- Frontend (React + Nginx) --------------------
   frontend:
-    build: ./happy-home
+    build:
+      context: ./happy-home        # ✅ CORRECT
+      dockerfile: Dockerfile
+     
     container_name: happyhome-frontend
     depends_on:
       - backend
@@ -44,7 +49,7 @@ services:
       - "80:80"
     restart: always
 
-    # -------------------- MongoDB (Notification Service) --------------------
+  # -------------------- MongoDB --------------------
   mongo-notification:
     image: mongo:7
     container_name: happyhome-mongo-notification
@@ -52,11 +57,11 @@ services:
     volumes:
       - mongo_notification_data:/data/db
     ports:
-      - "27017:27017"
+      - "27017:27017"   # optional
 
   # -------------------- Notification Service (.NET 8) --------------------
   notification-service:
-    build: ./NotificationService/NotificationService
+    image: 23amol08/happy-home-notification-service:latest
     container_name: happyhome-notification
     depends_on:
       - mongo-notification
@@ -64,6 +69,7 @@ services:
       - "5253:5253"
     environment:
       ASPNETCORE_URLS: http://+:5253
+      MONGO_CONNECTION_STRING: mongodb://mongo-notification:27017/notifications
     restart: always
 
 # -------------------- Volumes --------------------

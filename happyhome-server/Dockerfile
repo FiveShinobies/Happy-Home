@@ -1,17 +1,26 @@
-FROM eclipse-temurin:21-jdk-alpine
+# ---------- BUILD STAGE ----------
+FROM eclipse-temurin:21-jdk-alpine AS build
 
 WORKDIR /app
 
-COPY . .
+# Copy pom.xml and download dependencies (for better caching)
+COPY pom.xml mvnw ./
+COPY .mvn .mvn
+RUN ./mvnw dependency:go-offline -B
 
-# Make mvnw executable
-RUN chmod +x mvnw
+# Copy source code
+COPY src ./src
 
-# Build jar
+# Build the application
 RUN ./mvnw clean package -DskipTests
 
-# Rename jar to fixed name
-RUN mv target/*.jar app.jar
+# ---------- RUNTIME STAGE ----------
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /app
+
+# Copy the built jar from build stage
+COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 8080
 
